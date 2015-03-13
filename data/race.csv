@@ -1,0 +1,67 @@
+name,community,,Total:,  White,  Black,  Native,  Asian,Hawaiian,other,  Two or more races,    Two races including Some other race,"    Two races excluding Some other race, and three or more races"
+"Miami-Dade County, Florida",Miami,Estimate,2474676,1835134,474119,3902,38951,648,87982,33940,14945,18995
+,,Margin of Error,*****,"+/-5,217","+/-3,018",+/-759,+/-981,+/-138,"+/-3,635","+/-2,127","+/-1,432","+/-1,606"
+"Palm Beach County, Florida",Palm Beach ,Estimate,1309401,988739,222997,2767,30475,632,43605,20186,4096,16090
+,,Margin of Error,*****,"+/-3,335","+/-1,358",+/-542,+/-650,+/-152,"+/-2,890","+/-1,556",+/-773,"+/-1,298"
+"Jasper County, Indiana",Gary,Estimate,33254,32450,261,116,81,0,55,291,23,268
+,,Margin of Error,*****,+/-98,+/-54,+/-65,+/-44,+/-89,+/-54,+/-79,+/-33,+/-82
+"Lake County, Indiana",Gary,Estimate,495272,308862,126048,1570,6151,100,40908,11633,4708,6925
+,,Margin of Error,*****,"+/-1,779",+/-782,+/-320,+/-321,+/-40,"+/-1,941",+/-980,+/-714,+/-775
+"Newton County, Indiana",Gary,Estimate,14270,13790,36,9,25,0,65,345,3,342
+,,Margin of Error,*****,+/-121,+/-36,+/-13,+/-38,+/-89,+/-54,+/-143,+/-4,+/-143
+"Porter County, Indiana",Gary,Estimate,163406,151211,4804,395,2084,44,2320,2548,532,2016
+,,Margin of Error,*****,+/-528,+/-296,+/-129,+/-162,+/-53,+/-442,+/-389,+/-190,+/-320
+"Bucks County, Pennsylvania",Philadelphia,Estimate,624351,563523,22647,635,23817,130,5165,8434,1321,7113
+,,Margin of Error,*****,"+/-1,110",+/-590,+/-195,+/-591,+/-115,"+/-1,010",+/-829,+/-332,+/-792
+"Chester County, Pennsylvania",Philadelphia,Estimate,495651,432971,29750,503,18339,90,6125,7873,936,6937
+,,Margin of Error,*****,"+/-1,077",+/-633,+/-229,+/-379,+/-80,"+/-1,017",+/-766,+/-291,+/-723
+"Delaware County, Pennsylvania",Philadelphia,Estimate,557648,409619,107857,422,25919,76,4495,9260,843,8417
+,,Margin of Error,*****,+/-776,+/-710,+/-191,+/-475,+/-60,+/-693,+/-879,+/-251,+/-835
+"Montgomery County, Pennsylvania",Philadelphia,Estimate,794921,656710,67627,617,49796,193,6285,13693,1526,12167
+,,Margin of Error,*****,"+/-1,031",+/-848,+/-177,+/-472,+/-72,+/-979,+/-974,+/-360,+/-900
+"Philadelphia County, Pennsylvania",Philadelphia,Estimate,1514456,628564,660995,4010,94985,316,92015,33571,7115,26456
+,,Margin of Error,*****,"+/-3,214","+/-2,505",+/-598,+/-843,+/-172,"+/-3,772","+/-2,165","+/-1,017","+/-1,887"
+"Long Beach city, California",Long Beach,Estimate,462197,229779,62231,2539,60887,4487,77875,24399,4933,19466
+,,Margin of Error,+/-82,"+/-3,877","+/-2,622",+/-454,"+/-2,292",+/-929,"+/-3,340","+/-1,766",+/-781,"+/-1,593"
+"San Jose-Sunnyvale-Santa Clara, CA Metro Area; California",San Jose,Estimate,1817627,938757,45947,10599,561698,6445,178985,75196,17698,57498
+,,Margin of Error,*****,"+/-5,199","+/-1,020","+/-1,042","+/-2,029",+/-388,"+/-5,225","+/-2,825","+/-1,308","+/-2,319"
+"Boulder, CO Metro Area; Colorado",Boulder,Estimate,293205,256966,2421,1153,11766,91,13005,7803,877,6926
+,,Margin of Error,*****,"+/-1,681",+/-321,+/-238,+/-457,+/-59,"+/-1,660",+/-786,+/-266,+/-743
+"North Port-Bradenton-Sarasota, FL Metro Area; Florida",Bradenton,Estimate,699700,612898,45012,1433,10589,332,19289,10147,1664,8483
+,,Margin of Error,*****,"+/-1,783",+/-917,+/-315,+/-403,+/-55,"+/-1,871",+/-921,+/-426,+/-810
+"Tallahassee, FL Metro Area; Florida",Tallahassee,Estimate,364192,223728,117288,1370,8547,163,5980,7116,1124,5992
+,,Margin of Error,*****,+/-802,+/-717,+/-198,+/-290,+/-167,+/-709,+/-842,+/-342,+/-789
+"Columbus, GA-AL Metro Area (part); Georgia",Columbus,Estimate,240171,126515,95950,761,4791,438,4747,6969,1673,5296
+,,Margin of Error,*****,+/-795,+/-760,+/-250,+/-272,+/-149,+/-584,+/-766,+/-470,+/-682
+"Macon, GA Metro Area; Georgia",Macon,Estimate,231828,122830,99568,495,2814,56,2627,3438,229,3209
+,,Margin of Error,*****,+/-634,+/-849,+/-209,+/-227,+/-67,+/-705,+/-711,+/-148,+/-688
+"Milledgeville, GA Micro Area; Georgia",Milledgeville,Estimate,55960,27886,26843,47,680,0,267,237,52,185
+,,Margin of Error,*****,+/-168,+/-180,+/-42,+/-39,+/-98,+/-248,+/-118,+/-52,+/-99
+"Fort Wayne, IN Metro Area; Indiana",Fort Wayne,Estimate,414593,342827,41951,1298,9018,51,9609,9839,1384,8455
+,,Margin of Error,*****,+/-929,+/-682,+/-246,+/-368,+/-55,"+/-1,009",+/-860,+/-343,+/-790
+"Wichita, KS Metro Area; Kansas",Wichita,Estimate,615802,496601,45171,4978,20372,338,23716,24626,3410,21216
+,,Margin of Error,*****,"+/-2,164","+/-1,148",+/-563,+/-469,+/-176,"+/-1,996","+/-1,564",+/-586,"+/-1,366"
+"Lexington-Fayette, KY Metro Area; Kentucky",Lexington,Estimate,466479,383395,50568,1097,10952,240,11272,8955,1352,7603
+,,Margin of Error,*****,"+/-1,278",+/-746,+/-252,+/-393,+/-174,"+/-1,136",+/-955,+/-411,+/-862
+"Detroit-Warren-Livonia, MI Metro Area; Michigan",Detroit,Estimate,4320982,3043161,981422,13064,145997,1141,50717,85480,8870,76610
+,,Margin of Error,*****,"+/-2,216","+/-2,231",+/-931,"+/-1,091",+/-220,"+/-2,144","+/-2,755","+/-1,070","+/-2,520"
+"Duluth, MN-WI Metro Area (part); Minnesota",Duluth,Estimate,234990,217861,3389,6631,2106,33,740,4230,219,4011
+,,Margin of Error,*****,+/-231,+/-244,+/-345,+/-148,+/-51,+/-207,+/-434,+/-74,+/-436
+"Minneapolis-St. Paul-Bloomington, MN-WI Metro Area (part); Minnesota",St. Paul,Estimate,3135294,2561257,233343,20436,181372,1260,54040,83586,6649,76937
+,,Margin of Error,*****,"+/-3,035","+/-2,083","+/-1,057","+/-1,460",+/-188,"+/-3,130","+/-3,278",+/-926,"+/-2,937"
+"Gulfport-Biloxi, MS Metro Area; Mississippi",Biloxi,Estimate,245736,183201,47349,1265,5871,158,2148,5744,614,5130
+,,Margin of Error,*****,+/-722,+/-760,+/-431,+/-272,+/-145,+/-528,+/-947,+/-249,+/-910
+"Charlotte-Gastonia-Rock Hill, NC-SC Metro Area (part); North Carolina",Charlotte,Estimate,1508514,997610,368142,6304,50229,890,55229,30110,4391,25719
+,,Margin of Error,*****,"+/-3,183","+/-1,876",+/-644,+/-700,+/-166,"+/-3,283","+/-1,863",+/-785,"+/-1,711"
+"Grand Forks, ND-MN Metro Area (part); North Dakota",Grand Forks,Estimate,66662,60497,1447,1931,1186,11,414,1176,139,1037
+,,Margin of Error,*****,+/-193,+/-143,+/-158,+/-152,+/-16,+/-174,+/-247,+/-114,+/-247
+"Akron, OH Metro Area; Ohio",Akron,Estimate,702882,587807,84281,1146,14024,84,2636,12904,684,12220
+,,Margin of Error,*****,+/-741,+/-818,+/-315,+/-542,+/-82,+/-754,+/-963,+/-222,+/-962
+"State College, PA Metro Area; Pennsylvania",State College,Estimate,152689,136530,4666,348,8158,71,1223,1693,257,1436
+,,Margin of Error,*****,+/-391,+/-260,+/-84,+/-246,+/-63,+/-363,+/-354,+/-223,+/-288
+"Columbia, SC Metro Area; South Carolina",Columbia,Estimate,756550,466044,251391,1975,12317,451,11458,12914,995,11919
+,,Margin of Error,*****,"+/-1,279","+/-1,038",+/-308,+/-376,+/-138,"+/-1,284","+/-1,182",+/-322,"+/-1,108"
+"Myrtle Beach-North Myrtle Beach-Conway, SC Metro Area; South Carolina",Myrtle Beach,Estimate,265139,210575,36453,1221,3062,74,10529,3225,247,2978
+,,Margin of Error,*****,+/-996,+/-488,+/-304,+/-183,+/-108,+/-979,+/-580,+/-123,+/-570
+"Aberdeen, SD Micro Area; South Dakota",Aberdeen,Estimate,40315,38036,248,1183,365,0,21,462,20,442
+,,Margin of Error,*****,+/-116,+/-99,+/-173,+/-56,+/-74,+/-18,+/-171,+/-36,+/-168
