@@ -1,0 +1,27 @@
+Community	lat 	lon
+"Aberdeen, SD"	45.459091	-98.48732
+"Akron, OH"	41.08419	-81.514061
+"Biloxi, MS"	30.394381	-88.896378
+"Boulder, CO"	40.015739	-105.279243
+"Bradenton, F"	27.495501	-82.578072
+"Charlotte, NC"	35.222858	-80.837959
+"Columbia, SC"	33.998821	-81.045372
+"Columbus, GA"	32.462921	-84.987633
+"Detroit, MI"	42.33168	-83.04792
+"Duluth, MN"	46.78796	-92.099854
+"Fort Wayne, IN"	41.080261	-85.138313
+"Gary, IN"	41.60371	-87.337173
+"Grand Forks, ND"	47.92408	-97.032028
+"Lexington, KY"	38.048592	-84.50032
+"Long Beach, CA"	33.76672	-118.192398
+"Macon, GA"	32.83968	-83.627579
+"Miami, FL"	25.774811	-80.197731
+"Milledgeville, GA"	33.081409	-83.226212
+"Myrtle Beach, SC"	33.693562	-78.88266
+"Palm Beach, FL"	26.702881	-80.036613
+"Philadelphia, PA"	39.952278	-75.162453
+"San Jose, CA"	37.338581	-121.885567
+"St. Paul, MN"	44.943821	-93.093323
+"State College, PA"	40.793732	-77.860703
+"Tallahassee, FL"	30.43977	-84.280647
+"Wichita, KS"	37.686981	-97.335579
