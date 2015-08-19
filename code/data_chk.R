@@ -1,6 +1,6 @@
 # Data contain on 'sotc.csv' file were pre-processed by Xiaoque Cheng
 # with mergeGUI.
-soul <- read.csv("data/sotc.csv", header = T)
+soul <- read.csv("../data/sotc.csv", header = T)
 
 # Variable sets
 orig <- c(4:6, 8:61, 148:152, 165:175, 181:206, 210:213)
@@ -16,9 +16,7 @@ wt <- soul %>%
         filter(!is.na(WEIGHT)) %>%
         transmute(wt = WEIGHT/3)  
 
-des.wt <- svydesign(ids = ~1, strata = ~QSB, weights = ~as.numeric(wt2[,1]),
-      data = subset(soul,  !is.na(WEIGHT))
-    )
+des.wt <- svydesign(ids = ~1, strata = ~QSB, weights = ~as.numeric(wt2[,1]), data = subset(soul,  !is.na(WEIGHT)) )
 
 att.pr <- svyby(~CCEGRP2, ~QSB, des.wt, svymean, keep.var = TRUE, na.rm = T)
 
