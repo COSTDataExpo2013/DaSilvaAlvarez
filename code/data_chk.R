@@ -1,6 +1,9 @@
-# Data contain on 'sotc.csv' file were pre-processed by Xiaoque Cheng
-# with mergeGUI.
-soul <- read.csv("../data/sotc.csv", header = T)
+library(dplyr)
+library(survey)
+library(car)
+
+# Data contain on 'sotc.csv' file were pre-processed by Xiaoque Cheng with mergeGUI.
+soul <- read.csv("data/sotc.csv", header = T)
 
 # Variable sets
 orig <- c(4:6, 8:61, 148:152, 165:175, 181:206, 210:213)
@@ -16,16 +19,12 @@ wt <- soul %>%
         filter(!is.na(WEIGHT)) %>%
         transmute(wt = WEIGHT/3)  
 
-des.wt <- svydesign(ids = ~1, strata = ~QSB, weights = ~as.numeric(wt2[,1]), data = subset(soul,  !is.na(WEIGHT)) )
-
+des.wt <- svydesign(ids = ~1, strata = ~QSB, weights = ~as.numeric(wt$wt), data = subset(soul,  !is.na(WEIGHT)) )
 att.pr <- svyby(~CCEGRP2, ~QSB, des.wt, svymean, keep.var = TRUE, na.rm = T)
 
-soul$QSB2 <- soul$QSB
-
 soul <- soul%>%
-        left_join(att.pr[, 1:2], by = "QSB")
-
-soul$QSB <- with(soul, reorder(QSB2, CCEGRP2Attached))
+        left_join(att.pr[, 1:2], by = "QSB") %>% 
+        mutate(QSB = reorder(QSB, CCEGRP2Attached))
 soul$CCEGRP2Attached <- NULL
 
 # Reduction of the data set to avoid missing value imputation.
@@ -138,12 +137,12 @@ aux[reco.demo$QD10 == "Yes"] <- "Hispanic"
 reco.demo$QD111 <- factor(aux)
 
 # new soul.red data with recode variables and no missing
-soul.red2 <- data.frame(reco.aux,
-      reco.demo, soul.red[, c("CCE", "YEAR", "CCEGRP2", "QSB", "WEIGHT", "PROJWT")])
+soul.red2 <- data.frame(reco.aux, reco.demo, soul.red[, c("CCE", "YEAR", "CCEGRP2", "QSB", "WEIGHT", "PROJWT")])
 soul.red2$Q23[soul.red2$Q23 == 9] <- NA
 
-# the recodification creates a few new missing values that we don't
-# want.
+# the recodification creates a few new missing values that we don't want.
 aux <- apply(is.na(soul.red2), 1, sum)
 condi2 <- aux == 0
 soul.red2 <- soul.red2[condi2, ]
+
+

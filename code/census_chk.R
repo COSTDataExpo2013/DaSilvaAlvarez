@@ -32,13 +32,12 @@ assign("incomePC", aux)
 
 remove(aux, nam, i, file, ll)
 
-
-# 2) create a data set with variables from every, topic. We compute
-# some variables per topic and save it in census.data
+############################################################
+# 2) create a data set with variables from every, topic. 
+#We compute some variables per topic and save it in census.data
 census.data <- agesex[, 1]
 
-# agesex has population by sex and age, the columns ending with 'F' are
-# for female.  for now : agesex[,c(2,4,5,29)],
+# 2.1 agesex has population by sex and age, the columns ending with 'F' are for female
 x <- which(colnames(agesex) == "Female.")
 colnames(agesex)[-c(1:x)] <- paste(colnames(agesex)[-c(1:x)], "F", sep = "")
 p <- c(2.5, 7, 12, 16, 18.5, 20, 21, 23, 27, 32, 37, 42, 47, 52, 57, 60.5, 63, 65.5, 68, 72, 77, 82, 90)
@@ -56,8 +55,9 @@ agesex <- agesex %>%
 census.data <- inner_join(census.data, agesex[, c(1,51:57)], 'community')
 
 # ----------------------------------------- 
-# education has info, about education level and working status, unemployment rate can be computed
-# from this. Universe: Pop between 25-64 years un rate
+# 2.2) Education 
+# education level and working status. unemployment rate can be computed from this.
+# Universe: Pop between 25-64 years un rate
 
 education <- education %>% mutate( 
               unemployed = apply(education[, grep('Unemployed', colnames(education))], 1, sum), 
@@ -73,10 +73,7 @@ pet <- apply(agesex[, c(12:20, 36:44)], 1, sum)
 census.data <- inner_join(census.data, cbind(education[, c(3, 10, 17, 24, 31:34)]/education$Total., education[, c(1,36, 37)]), 'community')
 
 # ------------------------------------- 
-# income has info about income level, we should pooled some categories, or some meassure of
-# inequality can be computed here and compute average income per community.
-# mean point for income levels in miles (5=5000), we are not sure about
-# the upper limit, range is 'over 200'.
+# 2.3) income
 p2 <- c(5, 12.5, 17, 22.5, 27, 32.5, 37.5, 42.5, 47.5, 55, 67.5, 87.5, 112.5, 137.5, 175, 200)
 pp2 <- matrix(p2, nrow = 26, ncol = 16, byrow = T)
 
@@ -92,10 +89,9 @@ xx <- income %>% gather('grp', 'n', 3:18) %>%
 income <- inner_join(income, xx, 'community' )
 census.data <-inner_join(census.data, income[, c(1,19:21)],'community' )
 
-
 # -------------------------------------------------------
-# owner: People living in housholds, renting vs owning and how long are living in the
-# same place.
+# 2.4 owner: 
+# People living in housholds, renting vs owning and how long are living in current place.
 colnames(owner)[2] <- "Total"
 p3 <- c(5, 10, 15, 25, 35, 45)
 pp <- matrix(rep(p3, 2), nrow = 26, ncol = 6, byrow = T)
@@ -110,12 +106,12 @@ owner <- owner %>%
 census.data <- inner_join(census.data, owner[, c(1,17:21)], 'community')
 
 # --------------------------------------------------------- 
-# race, we can use proportion os white people, and also entropy measure with the
-# races distribution in each community, sum(p*log(p))
-
+#2.5) race, 
+# proportion of white, african-american, asian and other
 aux <- apply(race[, -c(1, 2, 3, 4, 6)], 1, sum)
 race <- race %>% 
-       mutate(white.prop = White/Total., afri.prop = Black/Total., 
+       mutate(white.prop = White/Total., 
+              afri.prop = Black/Total., 
               asian.prop = Asian/Total., 
               other.prop <- aux/race$Total.
               )
@@ -123,19 +119,10 @@ race <- race %>%
 census.data <- cbind(census.data, race[, 12:15])
 
 # ----------------------------------------------------------- 
-# workers: Proportion of household with 1,2 or more than 3 workers
-# (prop.1worker,prop.2worker,prop.3worker) Proportion of houses with
-# one two ando so on persons
-# (prop.1.per,prop.2.per,prop.3.per,prop.3.per) Proportion of no
-# workers and one worker in households with only one person
-# (prop1.no.workers, prop1.worker) proportion of no workers, one worker
-# and two workers in households with two person (prop2.no.workers,
-# prop2.1worker,prop.2worker ) same than previous but for households
-# with Three person househole (prop3.no.workers,prop3.1worker,
-# prop3.2worker,prop3.3worker ) same than previous but for households
-# with four person or more househole
-# (prop3.no.workers,prop3.1worker,prop3.2worker,prop3.3worker)
+# 2.6) workers: 
+# Total of working people in household, dividing by household size. 
 
+# household size proportion
 house.props <- workers %>% 
   select( -grep('worker', colnames(workers)) ) %>% 
   gather('house', 'cnt', -c(1:2)) %>% 
@@ -145,6 +132,7 @@ house.props <- workers %>%
 
 colnames(house.props)[-1] <-  c('prop.1.per', 'prop.2.per', 'prop.3.per', 'prop.4.per')   
 
+# working people proportions
 xx1 <- workers %>% select(1:6) %>% gather('worker', 'cnt.w', -c(1:2)) %>% mutate(house='Total') %>% rename(cnt.h = Total.)
 xx2 <- workers %>% select(c(1,7:9)) %>% gather('worker', 'cnt.w',-c(1:2)) %>% mutate(house='1per') %>% rename(cnt.h = X1.person.household.)
 xx3 <- workers %>% select(c(1,10:13)) %>% gather('worker', 'cnt.w', -c(1:2)) %>% mutate(house='2per') %>% rename(cnt.h = X2.person.household.)                    
@@ -163,14 +151,10 @@ workers <- cbind(workers, house.props[,-1], work.prop[,-1])
 census.data <- inner_join(census.data, workers[, c(1,24:40)], 'community')  
 
 # -----------------------------------------------------------------------
-# yearentry proportion of person entry 2000 or later
-# (prop.new.entry,prop.entry.90s,prop.entry.80s,prop.entry.prev.80s)
-# proportiono of native and foreign for different entries
-# (prop.nat.new.entry,prop.for.new.entry,prop.nat.entry.90s,prop.for.entry.90s)
-# proportion of persons not original from the place (entred,entred.nat,
-# entred.for) we can separate foreign born in naturalized us citizen
-# and not us citizen (entred.for.nat.us, entred.for.not.us)
+# 2.7) yearentry:
+# year of etnry in the community, dividing by us origin or foreign. 
 
+# year of entry proportions
 prop.year <- yearentry %>% 
   select(c(1:3, 8, 13, 18)) %>%  
   gather('year', 'cnt', -c(1:2)) %>% 
@@ -179,6 +163,7 @@ prop.year <- yearentry %>%
   spread(year,prop)
 colnames(prop.year)[-1] <- c('prop.new.entry','prop.entry.90s','prop.entry.80s', 'prop.entry.prev.80s' )
 
+# origin proportions by year of entry
 prop.origin <- yearentry %>% 
   select(c(1:2,4:7)) %>%  
   inner_join(agesex[, 1:2], by='community') %>% 
@@ -194,6 +179,7 @@ xx3 <- yearentry %>% select(1,13:15) %>% gather('orig', 'cnt', -c(1:2)) %>% muta
 xx4 <- yearentry %>% select(1,18:20) %>% gather('orig', 'cnt', -c(1:2)) %>% mutate(date='ent_bef80') %>% rename(cnt.h = Entered.before.1980.)
 xx <- rbind(xx1,xx2,xx3,xx4)
 
+# origin proportions
 prop.enter <- xx %>% 
   unite(org_dt, orig ,date) %>%
   mutate(prop = cnt / cnt.h) %>%
@@ -206,30 +192,29 @@ yearentry <- cbind(yearentry, prop.origin[,-1], prop.year[,-1], prop.enter[,-1])
 census.data <- inner_join(census.data, yearentry[, c(1,23:38)], 'community')
 
 # --------------------------------------------------------------
-
-colnames(census.data)[1] <- "QSB"
+# 2.8) income per-capita
 census.data$income.pc <- incomePC$income.pc
+colnames(census.data)[1] <- "QSB"
 
+############################################################
 
-
+############################################################
 # Compute comunity proportion of attached people, carefull casuse
 # comunities are in different order in soul data and census data.
-
 aux <- with(soul, table(QSB, CCEGRP2))
 tot <- apply(aux, 1, sum)
 prop.atach <- data.frame(aux[, 1]/tot, aux[, 2]/tot, aux[, 3]/tot)
 colnames(prop.atach) <- colnames(aux)
 prop.atach <- prop.atach[order(rownames(prop.atach)), ]
-
 census.data <- census.data[order(census.data[, 1]), ]
-census.data <- data.frame(QSB = rownames(prop.atach), census.data[, -1], 
-                          prop.atach)
+census.data <- data.frame(QSB = rownames(prop.atach), census.data[, -1], prop.atach)
 census.data$QSB <- with(census.data, reorder(QSB, Attached))
-
 # -----------------------------
+
 corrs <- cor(census.data[, -1])
-aux1 <- sort(corrs[, "Attached"])
-dat.cor <- rbind(data.frame(vars = names(corrs[1:61, "Attached"]), cor = corrs[1:61, 
+#aux1 <- sort(corrs[, "Attached"])
+dat.cor <- rbind(
+              data.frame(vars = names(corrs[1:61, "Attached"]), cor = corrs[1:61, 
                                                                                "Attached"], positive = corrs[1:61, "Attached"] > 0, type = "Attached"), 
                  data.frame(vars = names(corrs[1:61, "Not.Attached"]), cor = corrs[1:61, 
                                                                                    "Not.Attached"], positive = corrs[1:61, "Not.Attached"] > 0, type = "Not.Attached"))
