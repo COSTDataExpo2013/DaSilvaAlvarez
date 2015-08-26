@@ -67,7 +67,29 @@ Sys.setenv(TEXINPUTS=getwd(),
            BSTINPUTS=getwd())
 @
 
-<<data,cache=TRUE, echo=FALSE,warning=FALSE,message=FALSE>>=
+<<data,echo=FALSE,warning=FALSE,message=FALSE>>=
+# Procesing data sets from SOCT and Census Bureau
+source('code/data_chk.R')
+source('code/census_chk.R')
+
+# Compute comunity proportion of attached people
+lev <- levels(soul$QSB)
+census.data %<>%
+        mutate(QSB = factor(census.data$QSB, labels=lev) ) %>%
+        left_join(att.pr[, c(1,2,4)], by = "QSB") %>% 
+        mutate(QSB = reorder(QSB, CCEGRP2Attached))
+
+# loading results from cluster and random forest models. 
+load('data/res_cluster.Rdta')
+load('data/res_rf.Rdta')
+soul.red2$cl.id <- factor(km$cluster)
+rankings <- ddply(subset(important, rnk < 6), .(dim, rnk), function(x) length(x$dim))
+rankings$rnk <- as.factor(rankings$rnk)
+levels(rankings$rnk) <- paste("R", 1:5, sep = "")
+@
+
+
+<<data2,cache=TRUE, echo=FALSE,warning=FALSE,message=FALSE,eval=FALSE>>=
 # Data contain on 'sotc.csv' file were pre-processed by Xiaoque Cheng with mergeGUI. 
 soul <- read.csv('data/sotc.csv', header=T)
 
@@ -202,7 +224,7 @@ condi2 <- aux==0
 soul.red2 <- soul.red2[condi2 , ]
 @
 
-<<census,dependson='data', echo=FALSE,results='hide',warning=FALSE,message=FALSE>>=
+<<census,dependson='data', echo=FALSE,results='hide',warning=FALSE,message=FALSE,eval=FALSE>>=
 
 # 1) read data tables from census
 
@@ -418,7 +440,7 @@ dat.cor2 <- subset(dat.cor, vars %in% names(aux1[c(2:11, 51:61)]) )
 dat.cor2$vars <- factor(dat.cor2$vars)
 @
 
-<<cluster, dependson='data',echo=FALSE,warning=FALSE, cache=TRUE>>=
+<<cluster, dependson='data',echo=FALSE,warning=FALSE, cache=TRUE,eval=FALSE>>=
 # we choose 4 clusters
   set.seed(1234); km <- kmeans(soul.red2[,c(3,9:45)],centers=4)
 
@@ -441,7 +463,7 @@ means <- means[,-grep('se.', colnames(means))]
 
 @
 
-<<importance, dependson=c('data','cluster'), echo=FALSE,results='hide', cache=TRUE,warning=FALSE,message=FALSE>>=
+<<importance, dependson=c('data','cluster'), echo=FALSE,results='hide', cache=TRUE,warning=FALSE,message=FALSE,eval=FALSE>>=
 # Fit RF on each community, to explain CCE with the constructed variables 
 
 fr <- as.formula('CCEGRP2~. -CCE-cl.id-QS3_02-Q3A-Q3B-Q3C-QCE1-QCE2-QS3-WEIGHT-PROJWT')
@@ -618,7 +640,7 @@ Based on information from the \cite{acs2011}, socio-demographic characteristics 
 Figure \ref{map} shows the communities location, most are from the East Coast of the United States. Size of the dot represents population. Detroit and Philadelphia are the biggest communities while Aberdeen and Milledgeville are the smallest.
 \begin{figure}[hbpt] 
 \centering
-<<mapita,dependson=c('data','census'),echo=FALSE, fig.height=6,message=FALSE,warning=FALSE,warning=FALSE>>=
+<<mapita,dependson='data',echo=FALSE, fig.height=6,message=FALSE,warning=FALSE,warning=FALSE>>=
 lon.lat <- read.table('lon.lat.txt',header=T)
 require(ggmap)
 require(mapproj)
@@ -639,7 +661,7 @@ p+geom_point(data=aux.mer, mapping=aes(lon, lat),size=6*aux.mer$cate,alpha=.4)+x
 
 The \cite{acs2011} presents a population distribution among age groups and gender. There are 23 categories for age, most of them grouping 5 years together, and in each age category the midpoint is computed as a representative age for plotting. Figure \ref{age} shows the proportion of males and females by age category across all the communities.  The general profiles are very similar for all communities. In most communities, the proportion of people between 18 and 21 is around 5\%. However, there are five communities where the proportion of people between 18 and 21 is larger, Grand Forks (13\%), Milledgeville (12\%), Tallahassee (13\%), Boulder (9\%), and State College (22\%) of the total population. Communities with a larger proportion of people over 55 years old are Palm Beach and Bradenton.
  \begin{figure}[hbpt]
-<<agesex, echo=FALSE, dependson=c('census','data'),fig.height=7 >>=
+<<agesex, echo=FALSE, dependson='data',fig.height=7 >>=
 
 dat.aux<-melt(data=agesex,id.vars=c('community','prop1821'),measure.vars=c(4:26,28:50) )
 dat.aux$Gender <- rep( c('Male','Female'), each=23*26)
@@ -658,7 +680,7 @@ qplot(data=dat.aux,x=variable,y=prop,colour=Gender,shape=Gender)+xlab("Age")+yla
 \end{figure}
 
 \begin{figure}
-<<education,echo=FALSE, dependson=c('census','data')>>=
+<<education,echo=FALSE, dependson='data'>>=
 dat.aux <- melt(data=census.data,id.vars='QSB',measure.vars=c("Less.than.high.school.graduate.","High.school.graduate.","Some.college.or.associate.s.degree.","Bachelor.s.degree.or.higher.") ) 
 
 or.aux <- rep(dat.aux$value[dat.aux$variable=="Bachelor.s.degree.or.higher."],4)
@@ -695,27 +717,29 @@ Different colors identify different groups based on income and Gini. The colored
 
 
 \begin{figure}[hbpt]
-<<cluster.cen, dependson=c('data', 'census','corplot'), echo=FALSE,message=FALSE,warning=FALSE>>=
+<<cluster.cen, dependson=c('data','corplot'), echo=FALSE,message=FALSE,warning=FALSE>>=
 
-att.rf <- randomForest(Not.Attached ~ . , data=census.data[,c(2:63,66)], importance=T, ntree=2000)
-aux <- dat.cor[order(dat.cor$cor), ]
-aux <- subset(aux, type=='Attached')
-var.cl1 <- as.character(aux$vars[c(1:10,51:61)])
-d <- dist(census.data[, var.cl1])
-hc <- hclust(d, method='average')
-census.data$cl.att <- cutree(hc,3)
+# att.rf <- randomForest(Not.Attached ~ . , data=census.data[,c(2:63,66)], importance=T, ntree=2000)
+# aux <- dat.cor[order(dat.cor$cor), ]
+# aux <- subset(aux, type=='Attached')
+# var.cl1 <- as.character(aux$vars[c(1:10,51:61)])
+# d <- dist(census.data[, var.cl1])
+# hc <- hclust(d, method='average')
+# census.data$cl.att <- cutree(hc,3)
+# var.cl2 <- colnames(census.data)[c(3,8,12,17,21,22,28,31,48)]
 
-
-var.cl2 <- colnames(census.data)[c(3,8,12,17,21,22,28,31,48)]
+var.cl2 <- colnames(census.data) %in% c("aveageF","prop1821", "Bachelor.s.degree.or.higher." , "gini" , "own.rate" , "afri.prop",'prop.new.entry','un.rate',"prop.no.workers" )
 d2 <- dist(census.data[, var.cl2])
-hc2 <- hclust(d2, method='ward')
+hc2 <- hclust(d2, method='ward.D')
 census.data$cl.2 <- cutree(hc2,4)
 
 # Characterize the clusters with the numerical variables
-aux <- split(census.data[,c(3,8,12,17,21,22,28,31,48)], census.data$cl.2)
+#aux <- split(census.data[,c(3,8,12,17,21,22,28,31,48)], census.data$cl.2)
+aux <- split(census.data[,var.cl2], census.data$cl.2)
 aux1 <- ldply(aux, function(x) apply(x,2,mean) )
 colnames(aux1) <- c('cl.2', 'Age.Fem', '1821.Yr','Bachelor', 'Unemp','Gini','Own.rate', 'Afri.pr', 'No.workers', 'New.entry' ) 
-aux1$cl.id <- as.factor(aux1$cl.2)
+
+#aux1$cl.id <- as.factor(aux1$cl.2)
 ggparcoord(aux1[,-11], columns=-1,scale='std', groupColumn='cl.2',showPoints=T, order=c(3,4,6,10,2,5,9,7,8))  + theme(axis.text.x = element_text(angle=90, size=I(15))) +xlab('')+ylab('')+ scale_color_brewer(type='qual', palette=2, name='Group')
 @
 \caption{Parallel coordinate plot for community cluster means \label{cluster.cen}.  }
@@ -756,18 +780,27 @@ It can be observed that most of the small communities have larger indices of att
 Figure \ref{corplot} shows the correlation among every variable and the proportion of people attached and not attached per community. It is constructed combining the attachment index in the Knight survey data with the community descriptive variables from Census Bureau. At the community level, proportion of males, proportion of people between 18 and 21 years old, and proportion of households with several workers are positively associated with attached, showing correlations between .2 and .3. Interestingly, negative correlations are larger in absolute value, the average years living in the same place (renting or owning) are the most negatively correlated variables with attached.
 
 \begin{figure}[hbpt]
-<<corplot, echo=FALSE, dependson=c('census','data'),cache=TRUE>>=
+<<corplot, echo=FALSE, dependson=c('data'),cache=TRUE>>=
 # With Census data we want to describe communities
-levels(dat.cor2$vars) <- c('Aver.years.rent.in.community','Average.years.own.in.community','Prop.house.4.per.or.more',
-                         'Prop.house.2.per.1.worker','Prop.owner.more.10.years','size.community','Unemployment.rate',
-                         'Prop.unemployed','Prop.rent.more.10.years','Pro.female','Prop.house.3.per.2.worker',
-                         'Prop.native.entry.prev.80','Prop.white','Income.per.capita','Prop.militar','Prop.house.3.per.no.workers',
-                         'Prop.native.entry.90s','Prop.pop.bw.18.21','Prop.native.entry.80s','Prop.house.3.per.3.workers','Prop.male')
+cors1 <- cor(x=census.data[, 2:63], y=census.data[,64]) 
+cors2 <- cor(x=census.data[,2:63], y=census.data[,65]) 
+
+nm <- names(cors1[ rank(cors1) %in% c(1:10, 53:62), ])
+
+dat.cor <- rbind(
+data.frame(vars=rownames(cors1), cor=cors1[,1], positive=cors1[,1]>0, type='Attached') ,
+data.frame(vars=rownames(cors2), cor=cors2[,1], positive=cors2[,1]>0, type='Not Attached') )
+
+dat.cor2 <- subset(dat.cor, vars %in% nm)
+dat.cor2$vars <- reorder(factor(dat.cor2$vars), (dat.cor2$cor) *(dat.cor2$type=='Attached'), mean)
+
+
+levels(dat.cor2$vars) <-  c('Aver.years.own.in.community','size.community','Average.years.rent.in.community','Prop.owner.more.10.years','Pro.female','Prop.house.2.per.1.worker','Prop.house.4.per.or.more','Prop.rent.more.10.years','Prop.own','Unemployment.rate','Prop.1worker','Prop.bachelor','Prop.house.3.per.3.workers','Prop.native.entry.90s','Prop.native.entry.80s','Prop.militar','Prop.pop.bw.18.21','Prop.new.entry','Prop.male','Prop.2perhouse')
 
 dat.cor2$positive <- factor(dat.cor2$positive)
 levels(dat.cor2$positive) <- c('Negative','Positive')
 
-qplot(data=dat.cor2, y=vars, x=cor,xlab='Correlation',ylab='', color=positive, facets=~type, size=I(3))+theme(legend.position='bottom',legend.title=element_blank(),axis.text.y = element_text( size=I(15)))
+qplot(data=dat.cor2, y=vars, x=cor,xlab='Correlation',ylab='', color=positive, facets=~type, size=I(3))+theme(legend.position='bottom',legend.title=element_blank(),axis.text.y = element_text(size=I(15)))
 @
 \caption{Correlations with attached and not attached proportion in order from top to bottom based on correlation with attached\label{corplot}. This plot shows the 10 more relevant variables with positive correlation and 10 with negative correlation with attachment.}
 \end{figure}
@@ -801,7 +834,7 @@ The only differences among means for clusters 1 and 2 are family and friends ind
 Cluster 4 shows the biggest mean in most of the variables. These people love their community, and feel it is a good place for different social groups. The only two variables in which this group does not present the largest means are the proportion of close friends and the proportion of family that live in the same community. On the other hand, cluster 3 seems to be the opposite to cluster 4, people in this group are not satisfied with the community where they live.
 
 \begin{figure}[hbpt]
-<<cluster.plot2, dependson='cluster',echo=FALSE, fig.height=4,message=FALSE,warning=FALSE,warning=FALSE,fig.height=6.5>>=
+<<cluster.plot2, dependson='data',echo=FALSE, fig.height=4,message=FALSE,warning=FALSE,warning=FALSE,fig.height=6.5>>=
 ind <- colnames(soul.red2) == 'cl.id'
 colnames(soul.red2)[ind] <- 'Cluster.ID'
 
@@ -823,7 +856,7 @@ In this subsection the relationship between attachment and how long people stay 
 The proportion of lifetime lived in the community and its mean value for each community was computed. Figure \ref{stay} shows the mean proportion of lifetime lived in the community in a dot chart. As communities are sorted from top to bottom according to attachment proportion, this plot suggests a negative relation among the proportion of attached people and the average proportion of lifetime people have lived there. In other words, communities where new people are moving in regularly are expected to rank higher in terms of attachment than communities where they are not new people. 
 
 \begin{figure}
-<<life, dependson=c('data', 'cluster','census'), echo=FALSE,fig.height=4,message=FALSE,warning=FALSE>>=
+<<life, dependson='data', echo=FALSE,fig.height=4,message=FALSE,warning=FALSE>>=
 
 soul.red2 <- mutate(soul.red2, CCE = soul$CCE[condi1][condi2],
                     URBAN_GR = soul$URBAN_GR[condi1][condi2],
@@ -863,7 +896,7 @@ The study of the relationship between attachment and how long people stay in the
 
 Table \ref{move} shows that among the attached people 19\% would like to move if they had the chance to do it and this proportion increases to 70\% among not attached people. On the other hand, 32 \% of the not attached people would like to stay in the same neighborhood while among attached people this proportion reaches 80\%. This suggests a positive association among the attached group and a longer stay in one community.  
 
-<<moving, dependson=c('data', 'cluster'), echo=FALSE,results='asis'>>=
+<<moving, dependson='data', echo=FALSE,results='asis'>>=
 
 levels(soul$Q5)[1:2] <- 'Non Response'
 levels(soul$Q5)[2:6] <- 'Move from your neighborhood'
@@ -910,11 +943,11 @@ However, the years in which the survey took place were particularly bad years fo
 
 The bottom panel of Figure \ref{eco} presents the U.S. GDP growth rate in 2008, 2009, and 2010. A similar pattern is observed in both panels, suggesting the economic dimension is less related with attachment during the economic crisis. 
 \begin{figure}[hbpt]
-<<econ, dependson=c('data', 'cluster'), echo=FALSE,message=FALSE,warning=FALSE, fig.height=5>>=
+<<econ, dependson=c('data'), echo=FALSE,message=FALSE,warning=FALSE, fig.height=5>>=
 wt <- with(subset(soul,!is.na(PROJWT)), PROJWT)
 des.wt <- svydesign(ids=~1, strata=~QSB, weights=~wt, data=subset(soul,!is.na(PROJWT))) 
 vars  <- svyby(~ECONOMY+CCE, ~YEAR, des.wt, svyvar, keep.var=TRUE, na.rm=T)
-vars <- mutate(vars,rho = with(vars, V2/sqrt(V1*V4)),gdp = c(-0.4,-3.5,3.0))
+vars <- mutate(vars[, 1:5], rho = with(vars, V2/sqrt(V1*V4)),gdp = c(-0.4,-3.5,3.0)) 
 
 rhos.m <- melt(vars, id.vars='YEAR',measure.vars=c('rho','gdp' ) )
 levels(rhos.m$variable) <- c('Attachment-Economy correlation', 'GDP Rate')
@@ -933,7 +966,7 @@ A new variable indicating race was computed as a combination of racial group and
 The Blau index is defined as $D = 1- \sum p_i^2$ where $p_i$ is the proportion of the $i$-th group in the community.  This measure coincides with the Gini impurity measure used in statistics for decision tree related models\footnote{At the same time, Gini impurity measure is different than the Gini index used for measure income distribution in Section \ref{descri}} (as random forest). 
 \begin{figure}
 
-<<race, echo=FALSE, dependson=c('census', 'data' ,'cluster'), message=FALSE, fig.height=7>>= 
+<<race, echo=FALSE, dependson=c( 'data' ), message=FALSE, fig.height=7>>= 
 #relation between attached prop of white people and propo of.afro
 
 
@@ -972,7 +1005,7 @@ As mentioned in Section \ref{methods}, one output of a random forest classifier 
 There are two basic measures of variable importance in the \verb randomForest  function within R, only the \emph{mean decrease in Gini} ($DG$) was used. Each time a variable is used within a random forest classifier is associated with a decrease in the impurity of the data nodes, which is a measure with the Gini impurity index. Important variables will achieve larger reduction of impurity, then $DG$ can be used as a variable importance measurement.   
 
 \begin{figure}[hbpt]
-<<import.plot1, dependson='importance',echo=FALSE, fig.height=5,message=FALSE,warning=FALSE,warning=FALSE>>=
+<<import.plot1, dependson='data',echo=FALSE, fig.height=5,message=FALSE,warning=FALSE>>=
 rankings$dim <- factor(rankings$dim)
 rankings$dim <- recode(rankings$dim,"'QD2'='Residence.Years';'QD1'='Age';'Q15AB'='Lead.Int';'QD9'='Income';'Q9'='Economy';'Q8F'='Senior';'Q8D'='Children';'Q7M'='Care';'Q7L'='Leader';'Q7K'='Health';'Q7I'='Meet.People';'Q7G'='Colleges';'Q7F'='Schools';'Q7B'='Beauty';'Q6A'='5year.ahead';'Q6'='5year.ago'")
 
@@ -985,7 +1018,7 @@ Within each community explanatory variables were ranked according to $DG$. Rank 
 
 The variable 5.years.ago represents the perception of the community improvement, when comparing the community today with 5 years ago. Finally, the children variable indicates if the community is a good place for families with children.
 \begin{figure}[hbpt]
-<< import.plot3, dependson=c('data','cluster'), echo=FALSE >>=
+<< import.plot3, dependson=c('data'), echo=FALSE >>=
 aux <- soul.red2
 aux$QSB <- with(aux, reorder(QSB, -as.numeric(QSB) ))
 
@@ -997,7 +1030,7 @@ prodplot(aux, ~CCEGRP2+Q6A+QSB, divider=c("vspine","hspine",'hspine'),subset=lev
 What people expect from their community is the most important driver of attachment. Figure \ref{fowardplot} shows the relation of 5.years.ahead variable on each community. Each panel is a community, the width of the boxes represent the proportion of each level of the forward looking variable, and within that box, heights represent the proportion of attachment group. The structure is the same for all communities so this variable is a key driver across all the communities in the study independently of the overall level of attachment. 
 
 \begin{figure}
-<<import.plot2, dependson='importance',echo=FALSE, fig.height=6, fig.width=10,message=FALSE,warning=FALSE,warning=FALSE>>=
+<<import.plot2, dependson='data',echo=FALSE, fig.height=6, fig.width=10,message=FALSE,warning=FALSE,warning=FALSE>>=
 or.fun <- function(x) -max(x)
 important$dim2 <- with(important, reorder(dim, rmdg, or.fun)   )
 aux <- subset(important, dim2 %in% levels(dim2)[1:10])
@@ -1022,7 +1055,7 @@ Figure \ref{imp.st} shows the relative importance, red represents $rDG_{ij}$. Fo
 Some variable can be identified as relatively most important for communities with high levels of attachment compare to communities with lower attachment levels. For instance, the columns corresponding to quality of healthcare (Health) or quality of college and universities (College) in the community show red boxes at the top of the plot.  On the other hand, variables relatively more important for the bottom communities (with lower levels of attachment) are related with economic conditions (economy) and the retrospective vision of the community (5.years.ago). Additionally there are other variables which its relative importance is not associated with attachment level, 5.years.ahead or Beauty presents red boxes for several communities with different levels of attachment. 
 
 \begin{figure}
-<<import.plot4, dependson='importance',echo=FALSE, fig.height=5, fig.width=8,message=FALSE,warning=FALSE,warning=FALSE, fig.keep='all'>>=
+<<import.plot4, dependson='data',echo=FALSE, fig.height=5, fig.width=8,message=FALSE,warning=FALSE,warning=FALSE, fig.keep='all'>>=
 library(ggdendro)
 
 xx <- dcast(important[,c('dim','QSB','mdg.pr')], QSB~dim)

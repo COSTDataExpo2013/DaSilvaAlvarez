@@ -4,12 +4,12 @@ library(tidyr)
 library(reldist)
 
 # 1) read data tables from census
-ll <- list.files('data')
+ll <- list.files('data', pattern='.csv')
 file <- ll[-c(grep('sotc',ll),grep('PC',ll))]
 
 for (i in 1:length(file)) {
   aux <- read.csv(paste('data/',file[i],sep=''), header = T)
-  aux <- aux %>% filter(X=='Estimate') %>% 
+  aux %<>% filter(X=='Estimate') %>% 
     mutate_each(funs(as.character), vars=-c(1:3) )  %>% 
     mutate_each(funs(as.numeric), vars=-c(1:3) ) %>% 
     group_by(community)  %>%
@@ -113,7 +113,7 @@ race <- race %>%
        mutate(white.prop = White/Total., 
               afri.prop = Black/Total., 
               asian.prop = Asian/Total., 
-              other.prop <- aux/race$Total.
+              other.prop = aux/race$Total.
               )
 
 census.data <- cbind(census.data, race[, 12:15])
@@ -195,31 +195,3 @@ census.data <- inner_join(census.data, yearentry[, c(1,23:38)], 'community')
 # 2.8) income per-capita
 census.data$income.pc <- incomePC$income.pc
 colnames(census.data)[1] <- "QSB"
-
-############################################################
-
-############################################################
-# Compute comunity proportion of attached people, carefull casuse
-# comunities are in different order in soul data and census data.
-aux <- with(soul, table(QSB, CCEGRP2))
-tot <- apply(aux, 1, sum)
-prop.atach <- data.frame(aux[, 1]/tot, aux[, 2]/tot, aux[, 3]/tot)
-colnames(prop.atach) <- colnames(aux)
-prop.atach <- prop.atach[order(rownames(prop.atach)), ]
-census.data <- census.data[order(census.data[, 1]), ]
-census.data <- data.frame(QSB = rownames(prop.atach), census.data[, -1], prop.atach)
-census.data$QSB <- with(census.data, reorder(QSB, Attached))
-# -----------------------------
-
-corrs <- cor(census.data[, -1])
-#aux1 <- sort(corrs[, "Attached"])
-dat.cor <- rbind(
-              data.frame(vars = names(corrs[1:61, "Attached"]), cor = corrs[1:61, 
-                                                                               "Attached"], positive = corrs[1:61, "Attached"] > 0, type = "Attached"), 
-                 data.frame(vars = names(corrs[1:61, "Not.Attached"]), cor = corrs[1:61, 
-                                                                                   "Not.Attached"], positive = corrs[1:61, "Not.Attached"] > 0, type = "Not.Attached"))
-rownames(dat.cor) <- NULL
-dat.cor$vars <- reorder(dat.cor$vars, rep(dat.cor$cor[dat.cor$type == "Attached"], 
-                                          2))
-dat.cor2 <- subset(dat.cor, vars %in% names(aux1[c(2:11, 51:61)]))
-dat.cor2$vars <- factor(dat.cor2$vars)
