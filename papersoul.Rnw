@@ -44,20 +44,22 @@ Using the same pre-processed variables as \cite{full2010} most likely will drive
 options(replace.assign=TRUE,width=50)
 opts_chunk$set(fig.path='figure/graphics-', cache.path='cache/graphics-', fig.align='center', fig.width=8, fig.height=5, fig.show='hold', cache=TRUE, par=TRUE)
 knit_hooks$set(par=function(before, options, envir){
-if (before && options$fig.show!='none') par(mar=c(4,4,.1,.1),cex.lab=.95,cex.axis=.9,mgp=c(2,.7,0),tcl=-.3)
-}, crop=hook_pdfcrop)
+if (before && options$fig.show!= 'none') par(mar = c(4, 4, .1, .1), cex.lab = .95, cex.axis = .9, mgp = c(2, .7, 0), tcl = -.3)
+}, crop = hook_pdfcrop)
 
 # packages
 library(reshape2)
+library(plyr)
 library(productplots) 
 library(ggplot2)
 library(stats)
 library(randomForest)
+library(dplyr)
+library(tidyr)
 library(maps)
 library(fpc)
 library(xtable)
 library(car)
-library(plyr)
 library(GGally)
 library(survey)
 library(reldist) 
@@ -75,7 +77,7 @@ source('code/census_chk.R')
 # Compute comunity proportion of attached people
 lev <- levels(soul$QSB)
 census.data %<>%
-        mutate(QSB = factor(census.data$QSB, labels=lev) ) %>%
+        mutate(QSB = factor(census.data$QSB, labels=sort(lev)) ) %>%
         left_join(att.pr[, c(1,2,4)], by = "QSB") %>% 
         mutate(QSB = reorder(QSB, CCEGRP2Attached))
 
@@ -94,20 +96,20 @@ levels(rankings$rnk) <- paste("R", 1:5, sep = "")
 soul <- read.csv('data/sotc.csv', header=T)
 
 # Variable sets 
-orig <- c(4:6, 8:61 ,148:152,165:175, 181:206, 210:213)
-demo <- c(7,62:79,153:154,158:160,206:209,216,229)
-reco <- c(80:120,141:147,161,177:179,217:228)
-cons <- c(121:135,155:157, 162:164,176,180)
+orig <- c(4:6, 8:61 ,148:152, 165:175, 181:206, 210:213)
+demo <- c(7, 62:79, 153:154, 158:160, 206:209, 216, 229)
+reco <- c(80:120, 141:147, 161, 177:179, 217:228)
+cons <- c(121:135, 155:157, 162:164, 176, 180)
 
 # recode CCEGRP                              
 soul$CCEGRP2 <- recode(soul$CCEGRP,"'Engaged'='Attached';'Not Engaged'='Not Attached'")
 
 # Compute attachment proportion for ordering QSB levels
 wt     <- with(subset(soul,!is.na(WEIGHT)), WEIGHT/3)
-des.wt <- svydesign(ids=~1, strata=~QSB, weights=~wt, data=subset(soul, !is.na(WEIGHT) ) )
-att.pr <- svyby(~CCEGRP2, ~QSB, des.wt, svymean, keep.var=TRUE, na.rm=T)
+des.wt <- svydesign(ids=~1, strata = ~QSB, weights = ~wt, data = subset(soul, !is.na(WEIGHT) ) )
+att.pr <- svyby(~CCEGRP2, ~QSB, des.wt, svymean, keep.var = TRUE, na.rm = T)
 soul$QSB2 <- soul$QSB 
-soul <- merge(soul,att.pr[,1:2], by='QSB')
+soul <- merge(soul,att.pr[,1:2], by = 'QSB')
 soul$QSB <- with(soul, reorder(QSB2, CCEGRP2Attached)  ) 
 soul$CCEGRP2Attached <- NULL
 
@@ -120,17 +122,17 @@ aux  <- apply(miss, 2, mean )
 var.red <- names(aux[aux < .25])
 aux     <- apply(miss[,var.red], 1, sum )
 aux1    <- data.frame(table(aux))
-soul.red <- soul[aux <3, var.red]
-orig.red <- colnames(soul.red)[c(4,5,7,8:50)]
+soul.red <- soul[aux < 3, var.red]
+orig.red <- colnames(soul.red)[c(4, 5, 7, 8:50)]
 
 # age and proportion of age in place where live. 
-soul <- mutate(soul,QD1gr=cut(QD1, breaks=c(0,30,40,50,60,70,80,99), include.lowest=T),
-               QD2gr=cut(QD2, breaks=c(0,10,20,50  ,99), include.lowest=T),prop.res =QD2/QD1,
-               prop.gr=cut(prop.res, breaks=c(0,0.25,0.5,1,5.5),include.lowest=T))
+soul <- mutate(soul, QD1gr = cut(QD1, breaks = c(0, 30, 40, 50, 60, 70, 80, 99), include.lowest = T),
+               QD2gr=cut(QD2, breaks = c(0, 10, 20, 50, 99), include.lowest = T), prop.res = QD2/QD1,
+               prop.gr=cut(prop.res, breaks = c(0, 0.25, 0.5, 1, 5.5), include.lowest = T))
 
-soul$prop.res[soul$QD1==0] <- NA
+soul$prop.res[soul$QD1 == 0] <- NA
 
-demo.red <- c(colnames(soul.red)[c(6,51:62)],'QD1gr','QD2gr','prop.res','prop.gr')
+demo.red <- c(colnames(soul.red)[c(6, 51:62)],'QD1gr','QD2gr','prop.res','prop.gr')
 
 # Main reduction of data: Only variables with less than 25% of missing, and complete cases withion those vars. 
 aux <- apply(is.na(soul[,c(orig.red,demo.red,'CCE','CCEGRP2')]), 1, sum)
@@ -207,8 +209,8 @@ reco.demo <- mutate(reco.demo,
 
 # QD10 ask for hispanic or not hispanic, QD111 ask for race, we combine both in QD111                      
 aux <- reco.demo$QD111
-levels(aux)[c(4,6:10,15:17,19,20) ] <- 'Other'
-levels(aux)[c(1,2,5,7,8,10) ] <- 'Non Response'
+levels(aux)[c(4, 6:10, 15:17, 19, 20) ] <- 'Other'
+levels(aux)[c(1, 2, 5, 7, 8, 10) ] <- 'Non Response'
 levels(aux)[2] <- 'Hispanic'
 aux[reco.demo$QD10=='Yes'] <- 'Hispanic'                      
 reco.demo$QD111  <- factor(aux)
@@ -224,274 +226,6 @@ condi2 <- aux==0
 soul.red2 <- soul.red2[condi2 , ]
 @
 
-<<census,dependson='data', echo=FALSE,results='hide',warning=FALSE,message=FALSE,eval=FALSE>>=
-
-# 1) read data tables from census
-
-file <-c( "agesex.csv","education.csv","income.csv","owner.csv","race.csv","workers.csv", "yearentry.csv")
-
-for (i in 1:length(file) )  {
-  aux <- read.csv(file[i], header=T)
-  aux <- subset(aux, X=='Estimate')
-
-  for (j in 4:dim(aux)[2]) aux[,j] <- as.numeric(as.character(aux[,j]))
-
-  aux1 <- subset(aux,select=-c(1,3),subset=!community%in%c('Gary','Philadelphia'))
-  aux2 <- apply(subset(aux,community=='Gary',select=-c(1,2,3)),2,sum)
-  aux2 <- data.frame(community='Gary',t(aux2))
-
-  aux3 <- apply(subset(aux,community=='Philadelphia',select=-c(1,2,3)),2,sum)
-  aux3 <- data.frame(community='Philadelphia',t(aux3))
- 
-aux <- rbind(aux1,aux2,aux3)
- aux$community <- factor(aux$community)
-  nam <- sub(pattern='.csv', x=file[i], replacement='')
-  assign(nam, aux)
-}
-# for incomePC is slightly different ... 
-aux <- read.csv("incomePC.csv", header=T)
-aux <- subset(aux, X=='Estimate')
-aux[,4] <- as.numeric(as.character(aux[,4]))
-  aux1 <- subset(aux,select=-c(1,3),subset=!community%in%c('Gary','Philadelphia'))
-  aux2 <- apply(subset(aux,community=='Gary',select=-c(1,2,3)),2,mean)
-  aux2 <- data.frame(community='Gary',t(aux2))
-
-  aux3 <- apply(subset(aux,community=='Philadelphia',select=-c(1,2,3)),2,mean)
-  aux3 <- data.frame(community='Philadelphia',t(aux3))
-
-aux <- rbind(aux1,aux2,aux3)
- aux$community <- factor(aux$community)
-  assign('incomePC', aux)
-
-remove(aux, aux1, aux2,aux3, i, j, nam)
-
-# 2) create a data set with variables from every, topic. We compute some variables per topic
-# and save it in census.data
-census.data <- agesex[,1]
-
-# agesex    has population by sex and age, the columns ending with 'F' are for female. 
-# for now : agesex[,c(2,4,5,29)],  
-x <- which(colnames(agesex) == 'Female.')
-colnames(agesex)[-c(1:x)] <- paste(colnames(agesex)[-c(1:x)],'F', sep='')
-p <- c(2.5, 7,12,16,18.5,20,21,23,27,32,37,42,47,52,57,60.5,63,65.5,68,72,77,82,90)
-pp <- matrix(p, nrow=26, ncol=23, byrow=T)
-
-agesex <- mutate(agesex,aveageM = apply(agesex[,4:26]*pp, 1, sum)/agesex$Male,
-                 aveageF= apply(agesex[,28:50]*pp, 1, sum)/agesex$Female,
-                 prop.male=agesex$Male/agesex$Total,
-                 prop.female=agesex$Female/agesex$Total)
-
-agesex <- mutate(agesex,prop.m.f = agesex$aveageF/agesex$aveageM,
-                 pop100=agesex[,2]/100000,                
-                 prop1821=apply(agesex[,c(8:10,32:34)], 1, sum)/agesex$Total)
-
-census.data <- cbind(census.data,agesex[,c(51:57)])
-
-# -----------------------------------------
-# education has info, about education level and working status, unemployment rate can be 
-# computed from this. Universe: Pop between 25-64 years
-# un rate 
-education <- mutate(education,unemployed = apply(education[, c('Unemployed','Unemployed.1','Unemployed.2','Unemployed.3')]
-                                          ,1,sum),
-                              employed = apply(education[, c('Employed','Employed.1','Employed.2','Employed.3')],1,sum),
-                              militar = apply(education[, c('In.Armed.Forces','In.Armed.Forces.1','In.Armed.Forces.2',
-                                                            'In.Armed.Forces.3')],1,sum),
-                              not.labor = apply(education[, c('Not.in.labor.force','Not.in.labor.force.1',
-                                                              'Not.in.labor.force.2','Not.in.labor.force.3')], 1, sum))
-
-aux2 <- apply(education[, c('In.labor.force.','In.labor.force..1','In.labor.force..2','In.labor.force..3')], 1, sum) 
-
-education <- mutate(education,un.rate =unemployed/aux2,pr.rate = aux2/education$Total.)
-
-pet <- apply(agesex[, c(12:20,36:44)],1,sum)
-
-census.data <- cbind(census.data, education[,c(3,10,17,24,31:34)]/education$Total., education[,c(35,36)] )
-
-#-------------------------------------
-# income    has info about income level, we should pooled some categories, or some meassure of inequality can be computed here and compute average income per community. 
-
-# mean point for income levels in miles (5=5000), we are not sure about the 
-# upper limit, range is "over 200". 
-p2 <- c(5, 12.5,17,22.5,27,32.5,37.5,42.5,47.5,55,67.5,87.5,112.5,137.5,175,200)
-pp2 <- matrix(p2, nrow=26, ncol=16, byrow=T)
-
-income <- mutate(income,av.income=(apply(income[,-c(1,2)]*pp2,1,sum)/income$Total.)*1000,
-                 income.pc=(apply(income[,-c(1,2)]*pp2,1,sum)/agesex$Total.)*1000)
-
-income$gini <- 0
-for (i in 1:26) {
-  d <- rbind(mid=1000*p2, cont=as.vector(income[i,3:18]) ) 
-  d <- data.frame(t(d))
-  income$gini[i]  <- with(d, gini(mid, weights = cont  ) ) 
-}
-census.data <- cbind(census.data, income[,19:21])
-
-#-------------------------------------------------------
-# owner: People living in housholds, renting vs owning and how long are living in the same place. 
-
-colnames(owner)[2] <- 'Total'
-p3 <- c(5,10,15,25,35,45)
-pp <- matrix(rep(p3,2), nrow=26, ncol=6, byrow=T) 
-
-owner <- mutate(owner,own.rate = Owner.occupied./Renter.occupied.,
-                ow.prop10 = apply(owner[,6:9],1,sum)/owner$Owner.occupied.,
-                ren.prop10 = apply(owner[,13:16],1,sum)/owner$Renter.occupied.,
-                av.rent = apply(owner[,c(11:16)]*pp,1,sum)/owner$Renter.occupied.,
-                av.own = apply(owner[,c(4:9)]*pp,1,sum)/owner$Owner.occupied.)
-
-census.data <- cbind(census.data, owner[,17:21])
-
-#---------------------------------------------------------
-# race, we can use proportion os white people, and also entropy measure with the 
-# races distribution in each community, sum(p*log(p))
-
-race <- mutate(race,white.prop = White/Total.,afri.prop = Black/Total., asian.prop = Asian/Total.)
-aux <- apply(race[,-c(1,2,3,4,6)],1,sum)
-race$other.prop <- aux/race$Total.
-
-census.data <- cbind(census.data, race[,12:15])
-
-#-----------------------------------------------------------
-# workers
-#Proportion of household with 1,2 or more than 3 workers (prop.1worker,prop.2worker,prop.3worker)
-#Proportion of houses with one two ando so on persons (prop.1.per,prop.2.per,prop.3.per,prop.3.per)
-#Proportion of no workers and one worker in  households with only one person  (prop1.no.workers, prop1.worker)
-#proportion of no workers, one worker and two workers in  households with two person (prop2.no.workers, prop2.1worker,prop.2worker )
-#same than previous but for households with Three person househole (prop3.no.workers,prop3.1worker, prop3.2worker,prop3.3worker  )
-#same than previous but for households with four person or more househole (prop3.no.workers,prop3.1worker,prop3.2worker,prop3.3worker)
-
-workers <- mutate(workers,prop.no.workers = workers$No.workers/workers$Total.,
-                  prop.1worker = workers$X1.worker/workers$Total., 
-                  prop.2worker = workers$X2.workers/workers$Total., 
-                  prop.3worker = workers$X3.or.more.workers/workers$Total.,
-                  prop.1.per = workers$X1.person.household./workers$Total., 
-                  prop.2.per = workers$X2.person.household./workers$Total., 
-                  prop.3.per = workers$X3.person.household./workers$Total.,
-                  prop.4.per= workers$X4.or.more.person.household./workers$Total,
-                  prop1.no.workers= workers$No.workers.1/workers$X1.person.household.,
-                  prop1.worker = workers$X1.worker.1/workers$X1.person.household.,
-                  prop2.no.workers =  workers$No.workers.2/workers$X2.person.household.,
-                  prop2.1worker = workers$X1.worker.2/workers$X2.person.household.,
-                  prop2.2worker = workers$X2.workers.1/workers$X2.person.household.,
-                  prop3.no.workers = workers$No.workers.2/workers$X3.person.household.,
-                  prop3.1worker = workers$X1.worker.3/workers$X3.person.household.,
-                  prop3.2worker = workers$X2.workers.2/workers$X3.person.household.,
-                  prop3.3worker = workers$X3.workers/workers$X3.person.household.,
-                  prop3.no.workers = workers$No.workers.2/workers$X3.person.household.,
-                  prop3.1worker = workers$X1.worker.3/workers$X3.person.household.,
-                  prop3.2worker = workers$X2.workers.2/workers$X3.person.household.,
-                  prop3.3worker = workers$X3.workers/workers$X3.person.household.)
-
-census.data <- cbind(census.data, workers[,24:40])
-#-----------------------------------------------------------------------
-# yearentry 
-#proportion of person entry 2000 or later (prop.new.entry,prop.entry.90s,prop.entry.80s,prop.entry.prev.80s)
-#proportiono of native and foreign for different entries (prop.nat.new.entry,prop.for.new.entry,prop.nat.entry.90s,prop.for.entry.90s)
-#proportion of persons not original from the place (entred,entred.nat, entred.for)
-#we can separate foreign born in naturalized us citizen and not us citizen (entred.for.nat.us, entred.for.not.us)
-
-yearentry <- mutate(yearentry,prop.new.entry = yearentry$Entered.2000.or.later/yearentry$Total.,
-                    prop.entry.90s = yearentry$Entered.1990.to.1999./yearentry$Total.,
-                    prop.entry.80s = yearentry$Entered.1980.to.1989./yearentry$Total.,
-                    prop.entry.prev.80s = yearentry$Entered.before.1980./yearentry$Total.,
-                    prop.nat.new.entry = yearentry$Native/yearentry$Entered.2000.or.later,
-                    prop.for.new.entry = yearentry$Foreign.born./yearentry$Entered.2000.or.later,
-                    prop.nat.entry.90s = yearentry$Native.1/yearentry$Entered.1990.to.1999.,
-                    prop.for.entry.90s = yearentry$Foreign.born..1/yearentry$Entered.1990.to.1999.,
-                    prop.nat.entry.80s = yearentry$Native.2/yearentry$Entered.1980.to.1989.,
-                    prop.for.entry.80s = yearentry$Foreign.born..2/yearentry$Entered.1980.to.1989.,
-                    prop.nat.entry.prev.80s = yearentry$Native.3/yearentry$Entered.before.1980.,
-                    prop.for.entry.prev.80s = yearentry$Foreign.born..3/yearentry$Entered.before.1980.,
-                    entred = yearentry$Total./agesex$Total.,
-                    entred.nat = yearentry$Native/agesex$Total.,
-                    entred.for = yearentry$Foreign.born./agesex$Total.,
-                    entred.for.nat.us = yearentry$Naturalized.U.S..citizen/agesex$Total.,
-                    entred.for.not.us = yearentry$Not.a.U.S..citizen/agesex$Total.)
-
-
-census.data <- cbind(census.data, yearentry[,23:38])
-census.data$income.pc <- incomePC$income.pc
-colnames(census.data)[1] <- 'QSB'
-
-
-# Compute comunity proportion of attached people, carefull casuse comunities are 
-# in different order in soul data and census data. 
-aux <- with(soul,table(QSB,CCEGRP2))
-tot <- apply(aux,1,sum)
-
-prop.atach <- data.frame(aux[,1]/tot,aux[,2]/tot,aux[,3]/tot)
-colnames(prop.atach) <- colnames(aux)
-prop.atach <- prop.atach[order(rownames(prop.atach)),]
-census.data <- census.data[order(census.data[,1]), ]
-
-census.data <- data.frame(QSB=rownames(prop.atach), census.data[,-1],prop.atach) 
-census.data$QSB <- with(census.data, reorder(QSB, Attached)  ) 
-
-#-----------------------------
-corrs <- cor(census.data[,-1])
-aux1 <- sort(corrs[,'Attached'] )
-dat.cor <- rbind(data.frame(vars = names(corrs[1:61,'Attached']), cor = corrs[1:61,'Attached'] ,
-                            positive=corrs[1:61,'Attached'] > 0, type='Attached') , data.frame(vars = names(corrs[1:61,'Not.Attached']), 
-                            cor = corrs[1:61,'Not.Attached'] , positive=corrs[1:61,'Not.Attached'] > 0,type='Not.Attached'))
-
-rownames(dat.cor) <- NULL
-dat.cor$vars <- reorder(dat.cor$vars, rep(dat.cor$cor[dat.cor$type=='Attached'],2) )   
-dat.cor2 <- subset(dat.cor, vars %in% names(aux1[c(2:11, 51:61)]) )
-dat.cor2$vars <- factor(dat.cor2$vars)
-@
-
-<<cluster, dependson='data',echo=FALSE,warning=FALSE, cache=TRUE,eval=FALSE>>=
-# we choose 4 clusters
-  set.seed(1234); km <- kmeans(soul.red2[,c(3,9:45)],centers=4)
-
-# relation with attach, one cluster attach, one cluster not attach, 
-# two clusters in the middle 
-soul.red2$cl.id <- factor(km$cluster)
-  
-# Characterize the clusters with the numerical variables
-  pr <- soul.red2$PROJWT/3 
- des.pro <- svydesign(ids=~1, weights=~pr, data= soul.red2)
-
-frm <- formula(paste('~',paste(names(soul.red2[,3:45]), collapse='+')))
-
-means <-svyby(frm, ~cl.id+ YEAR, data=soul.red2,design=des.pro, FUN=svymean, keep.var=TRUE, na.rm=T)
-means <- means[,-grep('se.', colnames(means))]  
-
-  des.cl1  <- melt(means, id.vars=c('cl.id','YEAR'))
-  cv <- function(x) min(x) -max(x) 
-  des.cl1$variable <- reorder(des.cl1$variable, des.cl1$value, cv )
-
-@
-
-<<importance, dependson=c('data','cluster'), echo=FALSE,results='hide', cache=TRUE,warning=FALSE,message=FALSE,eval=FALSE>>=
-# Fit RF on each community, to explain CCE with the constructed variables 
-
-fr <- as.formula('CCEGRP2~. -CCE-cl.id-QS3_02-Q3A-Q3B-Q3C-QCE1-QCE2-QS3-WEIGHT-PROJWT')
-bosque <- dlply(soul.red2, .(QSB), function(x) randomForest(fr,importance=T, data=x))
-xx <- ldply(bosque, function(x) t(importance(x)[,'MeanDecreaseGini']))
-xx <- data.frame(QSB=names(bosque), xx)
-
-important <- melt(xx, id.vars='QSB')
-colnames(important) <- c('QSB', 'dim', 'mdg')
-important <- ddply(important, .(QSB), mutate, mdg.pr = 100*mdg/sum(mdg), rnk = rank(-mdg) )
-
-mdg.mm = ddply(important, .(dim), summarise, mdg.mm = mean(mdg.pr) )
-
-important <- merge(important,mdg.mm)
-important$rmdg = with(important, (mdg.pr-mdg.mm) *(mdg.pr > mdg.mm))
-
-rankings <- ddply(subset(important, rnk < 6), .(dim,rnk), function(x) length(x$dim) )
-rankings$rnk <- as.factor(rankings$rnk)
-levels(rankings$rnk) <- paste('R', 1:5, sep='')
-
-# reorder QSB levels again
-important <- merge(important,att.pr[,1:2], by='QSB')
-important$QSB <- with(important, reorder(QSB, CCEGRP2Attached)  ) 
-important$CCEGRP2Attached <- NULL
-
-
-@
-
 
 \section{Introduction}
 \label{intro}
@@ -503,17 +237,17 @@ This finding is illustrated in Figure \ref{pp1} with the product plot framework 
 \begin{figure}
 <<firstplot1, dependson='data',echo=FALSE, fig.height=6, fig.keep='all', out.width='0.48\\linewidth',message=FALSE,warning=FALSE>>=
 
-br <-  with(soul,quantile(OPENNESS,prob=seq(0,1, .2), na.rm=T)) 
-soul$Openess <- with(soul, cut(OPENNESS,br))
-levels(soul$Openess) <- round(br,1)
+br <-  with(soul, quantile(OPENNESS, prob = seq(0,1, .2), na.rm = T)) 
+soul$Openess <- with(soul, cut(OPENNESS, br))
+levels(soul$Openess) <- round(br, 1)
 
-br <-  with(soul,quantile(SOCIAL_O,prob=seq(0,1, .2), na.rm=T)) 
-soul$Social.Offering <- with(soul, cut(SOCIAL_O,br))
-levels(soul$Social.Offering) <- round(br,1)
+br <-  with(soul,quantile(SOCIAL_O, prob = seq(0, 1, .2), na.rm = T)) 
+soul$Social.Offering <- with(soul, cut(SOCIAL_O, br))
+levels(soul$Social.Offering) <- round(br, 1)
 
-prodplot(data=soul,PROJWT/3 ~CCEGRP2+ Openess, divider=c("vspine", "hspine"),subset=level == 2) +aes(fill=CCEGRP2) + theme(legend.position = 'none',axis.title.y=element_blank()) + scale_fill_brewer(type='seq', palette=1) 
+prodplot(data = soul, PROJWT/3 ~CCEGRP2 + Openess, divider = c("vspine", "hspine"), subset = level == 2) + aes(fill = CCEGRP2) + theme(legend.position = 'none',axis.title.y = element_blank()) + scale_fill_brewer(type = 'seq', palette = 1) 
 
-prodplot(data=soul, PROJWT/3 ~ CCEGRP2+ Social.Offering , divider=c("vspine", "hspine"),subset=level == 2)+aes(fill=CCEGRP2) + theme(axis.text.y = element_blank(),axis.title.y=element_blank()) + scale_fill_brewer(type='seq', palette=1, name='Attach level') 
+prodplot(data = soul, PROJWT/3 ~ CCEGRP2 + Social.Offering , divider = c("vspine", "hspine"), subset = level == 2) + aes(fill = CCEGRP2) + theme(axis.text.y = element_blank(),axis.title.y = element_blank()) + scale_fill_brewer(type = 'seq', palette = 1, name = 'Attach level') 
 
 @
   \caption{Product plots showing attachment distribution, in the left panel within levels of openness and in right panel within levels of social offering. Openness and Social Offering are binned to make them discrete using quantiles. This plot shows a strong positive association for both openness and social offering and the emotional attachment.\label{pp1}}
@@ -572,7 +306,7 @@ On the other hand, each table from the \cite{acs2011} has a different topic (see
 \end{tabular}
 \end{table}
 
-The Knight survey data contains missing information. The proportion of missing values was computed for each observation (by cases) and for each variable (by variables). Table \ref{tab1} shows the quantiles of the proportion of missing values computed by case and computed by variable. Focusing on the proportions of missing values by case, there is 19\% of missing record for the most complete response. This may be explained by the fact that 3 years of data was combined although some variables only appeared in 1 or 2 years. On the other hand, focusing on the proportion of missing values by variables, most of the variables show a reasonable proportion of missing values (13\%) while there are a few variables with really high proportions of missing values.   
+The Knight survey data contains missing information. The proportion of missing values was computed for each observation (by cases) and for each variable (by variables). Table \ref{tab1} shows the quantiles of the proportion of missing values computed by case and computed by variable. Focusing on the proportions of missing values by case, there is 19\% of missing record for the most complete response. This may be explained by the fact that 3 years of data was combined although some variables only appeared in 1 or 2 years. On the other hand, focusing on the proportion of missing values by variables, most of the variables show a reasonable proportion of missing values (the median is 12\%) while there are a few variables with really high proportions of missing values.   
 
 <<missing, echo=FALSE,dependson= 'data',results='asis'>>=
 miss <- is.na(soul)
@@ -589,16 +323,16 @@ cap <- 'Summary of the distribution of missing values by case and variables, e.g
 miss.v <- apply(miss, 2, mean) 
 miss.c <- apply(miss, 1, mean) 
 
-miss.c2 <- apply(miss[, miss.v < .25] , 1, mean) 
-tab2 <- rbind(quantile(miss.v),quantile(miss.c) )
-rownames(tab2) <- c('by Variable','by Case')
+miss.c2 <- apply(miss[, miss.v < .25], 1, mean) 
+tab2 <- rbind(quantile(miss.v), quantile(miss.c) )
+rownames(tab2) <- c('by Variable', 'by Case')
 colnames(tab2) <- c('Min', 'Q25', 'Median', 'Q75', 'Max')
 cap <- 'Quantiles of the proportion of missing values by case and variables.'
-xt <- xtable(tab2,caption=cap,label='tab1', align= 'lccccc' )
-print(xt, ,caption.placement="top")
+xt <- xtable(tab2, caption = cap, label = 'tab1', align = 'lccccc' )
+print(xt, ,caption.placement = "top")
 
-complete <- 100*sum(miss.c2==0)/length(miss.c2)
-dim.case <- dim(soul)[1]*sum(miss.c2==0)/length(miss.c2)
+complete <- 100*sum(miss.c2 == 0)/length(miss.c2)
+dim.case <- dim(soul)[1]*sum(miss.c2 == 0)/length(miss.c2)
 dim.var <- sum(miss.v < .25)
 @
 
@@ -640,21 +374,21 @@ Based on information from the \cite{acs2011}, socio-demographic characteristics 
 Figure \ref{map} shows the communities location, most are from the East Coast of the United States. Size of the dot represents population. Detroit and Philadelphia are the biggest communities while Aberdeen and Milledgeville are the smallest.
 \begin{figure}[hbpt] 
 \centering
-<<mapita,dependson='data',echo=FALSE, fig.height=6,message=FALSE,warning=FALSE,warning=FALSE>>=
+<<mapita,dependson='data',echo=FALSE, fig.height=6,message=FALSE,warning=FALSE,warning=FALSE, cache=TRUE>>=
 lon.lat <- read.table('lon.lat.txt',header=T)
-require(ggmap)
-require(mapproj)
+library(ggmap)
+library(mapproj)
 
 map <- get_map(location = 'united states', zoom = 4, maptype = "terrain", source = "google")
 
-aux.mer <- merge(lon.lat,census.data[,c(1,7)],by.x='Community',by.y='QSB')
-aux.mer$cate[aux.mer$pop100<3] <- 1
-aux.mer$cate[aux.mer$pop100>=3&aux.mer$pop100<8] <- 2
-aux.mer$cate[aux.mer$pop100>=8&aux.mer$pop100<20] <- 3
-aux.mer$cate[aux.mer$pop100>=20] <- 4
+aux.mer <- merge(lon.lat, census.data[, c(1, 7)], by.x = 'Community', by.y = 'QSB')
+aux.mer$cate[aux.mer$pop100 < 3] <- 1
+aux.mer$cate[aux.mer$pop100 >= 3&aux.mer$pop100 < 8] <- 2
+aux.mer$cate[aux.mer$pop100 >= 8 & aux.mer$pop100 < 20] <- 3
+aux.mer$cate[aux.mer$pop100 >= 20] <- 4
 
 p <- ggmap(map, extent = "device")
-p+geom_point(data=aux.mer, mapping=aes(lon, lat),size=6*aux.mer$cate,alpha=.4)+xlab('')+ylab('')+theme(axis.text.x=element_blank(),axis.text.y=element_blank()) 
+p + geom_point(data = aux.mer, mapping = aes(lon, lat), size = 6*aux.mer$cate, alpha = .4) + xlab('') + ylab('') + theme(axis.text.x = element_blank(), axis.text.y = element_blank()) 
 @
   \caption{Location of the 26 communities analyzed, size of dot represent population. Only two communities on the west coast. \label{map}}
 \end{figure}
@@ -663,17 +397,17 @@ The \cite{acs2011} presents a population distribution among age groups and gende
  \begin{figure}[hbpt]
 <<agesex, echo=FALSE, dependson='data',fig.height=7 >>=
 
-dat.aux<-melt(data=agesex,id.vars=c('community','prop1821'),measure.vars=c(4:26,28:50) )
-dat.aux$Gender <- rep( c('Male','Female'), each=23*26)
+dat.aux <- melt(data = agesex, id.vars = c('community', 'prop1821'), measure.vars = c(4:26, 28:50))
+dat.aux$Gender <- rep( c('Male','Female'), each = 23*26)
 levels(dat.aux$variable)[24:46] <- levels(dat.aux$variable)[1:23] 
 dat.aux$prop <- with(dat.aux, value/rep(agesex$Total., times=23*2))
 
-p <- c(2.5, 7,12,16,18.5,20,21,23,27,32,37,42,47,52,57,60.5,63,65.5,68,72,77,82,90)
+p <- c(2.5, 7, 12, 16, 18.5, 20, 21, 23, 27, 32, 37, 42, 47, 52, 57, 60.5, 63, 65.5, 68, 72, 77, 82, 90)
 levels(dat.aux$variable) <- p
 dat.aux$variable <- as.numeric(as.character(dat.aux$variable))
 dat.aux$community <- with(dat.aux, reorder(community, -prop1821) )
 
-qplot(data=dat.aux,x=variable,y=prop,colour=Gender,shape=Gender)+xlab("Age")+ylab("Proportion")+geom_line( ) +geom_point(size=I(.1))+ facet_wrap(facets=~community,ncol=7)+ theme(legend.position=c(.9,0.1)) + scale_color_brewer(type='qual', palette='Dark2')
+qplot(data = dat.aux, x = variable,y = prop, colour = Gender, shape = Gender) + xlab("Age") + ylab("Proportion") + geom_line( ) + geom_point(size = I(.1)) + facet_wrap(facets =~community, ncol = 7) + theme(legend.position = c(.9,0.1)) + scale_color_brewer(type = 'qual', palette = 'Dark2')
 
 @
 \caption{Proportion of people by age category, horizontal axis is the midpoint age for each group. The line color and point shape represents the gender. Each facet is a community, sorted from top to bottom according to proportion of people between 18 and 21 years old. Similar age distribution across gender in all communities. Only State College and Grand Folks shows a peak on 18-21 years old. \label{age}}
@@ -681,15 +415,19 @@ qplot(data=dat.aux,x=variable,y=prop,colour=Gender,shape=Gender)+xlab("Age")+yla
 
 \begin{figure}
 <<education,echo=FALSE, dependson='data'>>=
-dat.aux <- melt(data=census.data,id.vars='QSB',measure.vars=c("Less.than.high.school.graduate.","High.school.graduate.","Some.college.or.associate.s.degree.","Bachelor.s.degree.or.higher.") ) 
+dat.aux <- census.data %>% 
+  select(QSB, Less.than.high.school.graduate.,High.school.graduate.,Some.college.or.associate.s.degree.,Bachelor.s.degree.or.higher.) %>% arrange(Bachelor.s.degree.or.higher.) %>%
+  mutate(QSB = reorder(QSB, Bachelor.s.degree.or.higher.)) %>%
+  gather(variable, value, -QSB)
 
-or.aux <- rep(dat.aux$value[dat.aux$variable=="Bachelor.s.degree.or.higher."],4)
-dat.aux$QSB <- with(dat.aux, reorder(x=QSB, X=or.aux  ) )  
+#dat.aux <- melt(data=census.data,id.vars='QSB',measure.vars=c("Less.than.high.school.graduate.","High.school.graduate.","Some.college.or.associate.s.degree.","Bachelor.s.degree.or.higher.") ) 
+#or.aux <- rep(dat.aux$value[dat.aux$variable=="Bachelor.s.degree.or.higher."],4)
+#dat.aux$QSB <- with(dat.aux, reorder(x=QSB, X=or.aux  ) )  
 
 levels(dat.aux$variable) <- c('Less High School', 'High School', 'Some College', 'Bachelor or higher')
 colnames(dat.aux)[2] <- 'Education.Level'
 
-prodplot(data=dat.aux, value~Education.Level+QSB,divider=c( "hspine","vspine"))+aes(fill=Education.Level) + theme(legend.position="bottom",legend.title=element_blank(),axis.title.y=element_blank(),axis.text.y = element_text( size=I(10)) ) + scale_fill_brewer(type='seq', palette=2)
+prodplot(data = dat.aux, value~Education.Level + QSB, divider = c( "hspine","vspine")) + aes(fill = Education.Level) + theme(legend.position = "bottom", legend.title = element_blank(), axis.title.y = element_blank(), axis.text.y = element_text( size = I(10)) ) + scale_fill_brewer(type = 'seq', palette = 2)
 @
 \caption{Product plot of education level by community, the width of each box represent the proportion of people with that education level within a community.  Communities are sorted from top to bottom by proportion of people with college degree. Big range of variation on education level among the communities. \label{edu}}
 \end{figure}
@@ -697,15 +435,19 @@ prodplot(data=dat.aux, value~Education.Level+QSB,divider=c( "hspine","vspine"))+
 Figure \ref{edu} shows the proportion of people in each education level across communities, sorted from top to bottom by proportion of people with a college degree. Since the data from the \cite{acs2011} is already aggregated at the community level, this product plot only reports proportion of education within each community (not joint proportions), which is why all horizontal bars have the same height. 
 We can observe that Boulder, San Jose, and State College are the most educated communities while Milledgeville, Biloxi, and Macon are the less educated communities.
 \begin{figure}
-<<income, echo=FALSE,dependson=c('data','census'), fig.height=6,fig.keep='all', out.width='0.49\\linewidth'>>=
-aux <- subset(census.data, QSB %in% levels(census.data$QSB)[c(18,9,20,16,5,3,10,1,7,8,14)] )
-aux <- mutate(aux, gr =factor(c(2,1,2,2,3,3,3,1,1,3,2)), h = c(1,0,0,0,1,1,1,0,0,0,1), v = c(0,0,0,1,0,1,0,0,0,0,0))
+<<income, echo=FALSE,dependson=c('data'), fig.height=6,fig.keep='all', out.width='0.49\\linewidth'>>=
 
-ggplot(census.data, aes(gini, income.pc)) + geom_point(size=I(4)) + geom_text(data = aux, aes(gini,income.pc, label = QSB,color=gr,hjust=h,vjust=v), size=I(6))+ylab('Income per capita') +xlab('Gini')+ theme(legend.position="none") 
+grps <- c("Boulder, CO", "San Jose, CA" ,"St. Paul, MN",
+"Aberdeen, SD", "Wichita, KS", "Fort Wayne, IN", "Gary, IN",
+"Macon, GA", "Miami, FL", "Milledgeville, GA", "Tallahassee, FL")
 
-aux2 <- mutate(aux,h = c(0,1,0,1,0,0,0,0,0,0,1),v = c(0,0,1,0,0,1,0,0,0,0,0))
+aux <- census.data %>% filter( QSB %in% grps ) %>%
+  mutate(gr =factor(c(2, 1, 2, 2, 3, 3, 3, 1, 1, 3, 2)), h1 = c(1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1), v1 = c(0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0), 
+         h2 = c(0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1), v2 = c(0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0))
 
-ggplot(census.data, aes(Bachelor.s.degree.or.higher., income.pc))+ geom_point(size=I(4)) +  geom_text(data=aux2,aes(Bachelor.s.degree.or.higher.,income.pc, label=QSB,color=gr,hjust=h,vjust=v), size=I(5))  +ylab('Income per capita')+xlab('Bachelor Degree') +theme(legend.position="none") 
+ggplot(census.data, aes(gini, income.pc)) + geom_point(size = I(4)) + geom_text(data = aux, aes(gini,income.pc, label = QSB, color = gr, hjust = h1,vjust = v1), size = I(6)) + ylab('Income per capita') + xlab('Gini') + theme(legend.position = "none") 
+
+ggplot(census.data, aes(Bachelor.s.degree.or.higher., income.pc)) + geom_point(size = I(4)) +  geom_text(data = aux, aes(Bachelor.s.degree.or.higher.,income.pc, label = QSB, color = gr, hjust = h2, vjust = v2), size = I(5))  + ylab('Income per capita') + xlab('Bachelor Degree') + theme(legend.position = "none") 
 @
 \caption{Scatter plot of income per capita by Gini index (left) and scatter-plot of income per capita by proportion of people with bachelor degree (right). Colors identify some groups based on income and Gini. \label{ecolink}} 
 \end{figure}
@@ -730,17 +472,17 @@ Different colors identify different groups based on income and Gini. The colored
 
 var.cl2 <- colnames(census.data) %in% c("aveageF","prop1821", "Bachelor.s.degree.or.higher." , "gini" , "own.rate" , "afri.prop",'prop.new.entry','un.rate',"prop.no.workers" )
 d2 <- dist(census.data[, var.cl2])
-hc2 <- hclust(d2, method='ward.D')
+hc2 <- hclust(d2, method = 'ward.D')
 census.data$cl.2 <- cutree(hc2,4)
 
 # Characterize the clusters with the numerical variables
 #aux <- split(census.data[,c(3,8,12,17,21,22,28,31,48)], census.data$cl.2)
-aux <- split(census.data[,var.cl2], census.data$cl.2)
-aux1 <- ldply(aux, function(x) apply(x,2,mean) )
+aux <- split(census.data[, var.cl2], census.data$cl.2)
+aux1 <- ldply(aux, function(x) apply(x, 2, mean) )
 colnames(aux1) <- c('cl.2', 'Age.Fem', '1821.Yr','Bachelor', 'Unemp','Gini','Own.rate', 'Afri.pr', 'No.workers', 'New.entry' ) 
 
 #aux1$cl.id <- as.factor(aux1$cl.2)
-ggparcoord(aux1[,-11], columns=-1,scale='std', groupColumn='cl.2',showPoints=T, order=c(3,4,6,10,2,5,9,7,8))  + theme(axis.text.x = element_text(angle=90, size=I(15))) +xlab('')+ylab('')+ scale_color_brewer(type='qual', palette=2, name='Group')
+ggparcoord(aux1[,-11], columns = -1, scale = 'std', groupColumn = 'cl.2', showPoints = T, order = c(3, 4, 6, 10, 2, 5, 9, 7, 8))  + theme(axis.text.x = element_text(angle = 90, size = I(15))) + xlab('') + ylab('') + scale_color_brewer(type = 'qual', palette = 2, name = 'Group')
 @
 \caption{Parallel coordinate plot for community cluster means \label{cluster.cen}.  }
 \end{figure}
@@ -770,26 +512,26 @@ Proportion of attached people varies from 10\% to around 40\%, the top three com
 \begin{figure}[hbpt]
 <<qsbplot, dependson='data', echo=FALSE, fig.height=6.5>>=
 
-prodplot(data=soul,WEIGHT/3 ~ CCEGRP2+QSB, divider=c( "hspine","vspine"),subset=level == 2)+aes(fill=CCEGRP2) + theme(legend.position ='bottom',axis.title.x=element_blank(),axis.title.y=element_blank(),legend.title=element_blank(),axis.text.y = element_text( size=I(14))) + scale_fill_brewer(type='seq', palette=1) 
+prodplot(data = soul, WEIGHT/3 ~ CCEGRP2 + QSB, divider = c( "hspine","vspine"), subset = level == 2) + aes(fill = CCEGRP2) + theme(legend.position = 'bottom', axis.title.x = element_blank(), axis.title.y = element_blank(), legend.title = element_blank(), axis.text.y = element_text( size=I(14))) + scale_fill_brewer(type = 'seq', palette = 1) 
 @
 \caption{Attachment proportion in all 26 communities, sorted from top to bottom by proportion of attached people. In all cases the proportion of attached people is less than 50\%, small communities are more attached than larger ones. \label{comu}}
 \end{figure}
 
 It can be observed that most of the small communities have larger indices of attachment than most of the large communities. In the top fifteen communities the only large community is St Paul. Which could imply community size is important to explain people's  attachment. 
 
-Figure \ref{corplot} shows the correlation among every variable and the proportion of people attached and not attached per community. It is constructed combining the attachment index in the Knight survey data with the community descriptive variables from Census Bureau. At the community level, proportion of males, proportion of people between 18 and 21 years old, and proportion of households with several workers are positively associated with attached, showing correlations between .2 and .3. Interestingly, negative correlations are larger in absolute value, the average years living in the same place (renting or owning) are the most negatively correlated variables with attached.
+Figure \ref{corplot} shows the correlation among every variable and the proportion of people attached and not attached per community. It is constructed combining the attachment index in the Knight survey data with the community descriptive variables from Census Bureau. At the community level, proportion of houses with two people, proportion of males, and proportion of people moved into a community within last five years are positively associated with attached, showing correlations between .25 and .35. Interestingly, negative correlations are larger in absolute value, the average years living in the same place (renting or owning) and size of the community are the most negatively correlated variables with attached.
 
 \begin{figure}[hbpt]
 <<corplot, echo=FALSE, dependson=c('data'),cache=TRUE>>=
 # With Census data we want to describe communities
-cors1 <- cor(x=census.data[, 2:63], y=census.data[,64]) 
-cors2 <- cor(x=census.data[,2:63], y=census.data[,65]) 
+cors1 <- cor(x = census.data[, 2:63], y = census.data[, 64]) 
+cors2 <- cor(x = census.data[, 2:63], y = census.data[, 65]) 
 
 nm <- names(cors1[ rank(cors1) %in% c(1:10, 53:62), ])
 
 dat.cor <- rbind(
-data.frame(vars=rownames(cors1), cor=cors1[,1], positive=cors1[,1]>0, type='Attached') ,
-data.frame(vars=rownames(cors2), cor=cors2[,1], positive=cors2[,1]>0, type='Not Attached') )
+data.frame(vars = rownames(cors1), cor = cors1[,1], positive = cors1[,1]>0, type = 'Attached') ,
+data.frame(vars = rownames(cors2), cor = cors2[,1], positive = cors2[,1]>0, type = 'Not Attached') )
 
 dat.cor2 <- subset(dat.cor, vars %in% nm)
 dat.cor2$vars <- reorder(factor(dat.cor2$vars), (dat.cor2$cor) *(dat.cor2$type=='Attached'), mean)
@@ -800,7 +542,7 @@ levels(dat.cor2$vars) <-  c('Aver.years.own.in.community','size.community','Aver
 dat.cor2$positive <- factor(dat.cor2$positive)
 levels(dat.cor2$positive) <- c('Negative','Positive')
 
-qplot(data=dat.cor2, y=vars, x=cor,xlab='Correlation',ylab='', color=positive, facets=~type, size=I(3))+theme(legend.position='bottom',legend.title=element_blank(),axis.text.y = element_text(size=I(15)))
+qplot(data = dat.cor2, y = vars, x = cor, xlab = 'Correlation', ylab = '', color = positive, facets =~type, size = I(3)) + theme(legend.position= 'bottom', legend.title = element_blank(), axis.text.y = element_text(size = I(15)))
 @
 \caption{Correlations with attached and not attached proportion in order from top to bottom based on correlation with attached\label{corplot}. This plot shows the 10 more relevant variables with positive correlation and 10 with negative correlation with attachment.}
 \end{figure}
@@ -816,8 +558,8 @@ Figure \ref{para} is a parallel coordinate plot of the cluster means. The first 
 \begin{figure}[hbpt]
 <<cluster.plot1, dependson='cluster',echo=FALSE,message=FALSE,warning=FALSE,warning=FALSE,fig.height=6.5>>=
 lab <- c('Family','Refer','Perfect','Children','Leader','Proud', 'Lead. Int.','Talented','Job','Meet.People','
-         5year.ahead', 'School','5year.ago','Reputation', 'Care', 'Senior','Economy','Satisfaction','Health',
-         'Find.Job', 'Parks','Beauty','Roads','Housing','Night.Life', 'Minorities', 'Inmigrants', 'Gay', 'Colleges', 'Safe', 'Friends')
+         5year.ahead', 'School','Reputation','5year.ago', 'Care', 'Senior','Economy','Satisfaction','Health',
+         'Find.Job', 'Parks','Beauty','Roads','Housing','Night.Life', 'Minorities', 'Inmigrants', 'Gay', 'Safe','Colleges', 'Friends')
 
 aux2 <- subset(des.cl1, variable %in% levels(des.cl1$variable)[1:31])
 aux2$variable <- factor(aux2$variable)
@@ -825,20 +567,22 @@ aux2$var2 <- as.integer(aux2$variable)
 colnames(aux2)[1] <- 'Clusters'
 
 #,main='Mean Value Selected Variables Used in the K-means Cluster'
-qplot(data=aux2, var2, value, color=Clusters,shape=Clusters,xlab='', ylab='',size=I(3)) +geom_line(size=I(1)) + facet_wrap(~YEAR,nrow=3) + theme(axis.text.x = element_text(angle=90, size=I(15)), legend.position='bottom' ) + scale_x_discrete(breaks = 1:31, labels=lab) + scale_color_brewer(type='qual', palette='Paired')
+qplot(data = aux2, var2, value, color = Clusters,shape = Clusters,xlab = '', ylab = '',size = I(3)) +geom_line(size = I(1)) + facet_wrap(~YEAR,nrow = 3) + theme(axis.text.x = element_text(angle = 90, size = I(15)), legend.position = 'bottom' ) + scale_x_discrete(breaks = 1:31, labels = lab) + scale_color_brewer(type='qual', palette='Paired')
 @
 \caption{Cluster mean points. Mean values for all the variables used to create the clusters in every year. \label{para}}
 \end{figure}
 
-The only differences among means for clusters 1 and 2 are family and friends indices, i.e. the clique variables. Cluster 2 is characterized by the larger family and friends indices. Clusters 1 and 2 have quite similar mean values for the rest of the variables used to create the clusters.  
-Cluster 4 shows the biggest mean in most of the variables. These people love their community, and feel it is a good place for different social groups. The only two variables in which this group does not present the largest means are the proportion of close friends and the proportion of family that live in the same community. On the other hand, cluster 3 seems to be the opposite to cluster 4, people in this group are not satisfied with the community where they live.
+Cluster 1 shows the biggest mean in most of the variables. These people love their community, and feel it is a good place for different social groups. The only two variables in which this group does not present the largest means are the proportion of close friends and the proportion of family that live in the same community. On the other hand, cluster 2 seems to be the opposite to cluster 1, people in this group are not satisfied with the community where they live.
+
+The only differences among means for clusters 3 and 4 are family and friends indices, i.e. the clique variables. Cluster 4 is characterized by the larger family and friends indices. Clusters 3 and 4 have quite similar mean values for the rest of the variables used to create the clusters.  
+
 
 \begin{figure}[hbpt]
 <<cluster.plot2, dependson='data',echo=FALSE, fig.height=4,message=FALSE,warning=FALSE,warning=FALSE,fig.height=6.5>>=
 ind <- colnames(soul.red2) == 'cl.id'
 colnames(soul.red2)[ind] <- 'Cluster.ID'
 
-prodplot(soul.red2, PROJWT ~ CCEGRP2+ Cluster.ID + YEAR, divider=c("vspine", "hspine",'vspine'),subset=level == 2)+aes(fill=CCEGRP2)+ theme(legend.position='bottom', legend.title=element_blank(),axis.title.y=element_blank()) + scale_fill_brewer(type='seq', palette=1)
+prodplot(soul.red2, PROJWT ~ CCEGRP2+ Cluster.ID + YEAR, divider=c("vspine", "hspine",'vspine'), subset = level == 2)+aes(fill = CCEGRP2) + theme(legend.position = 'bottom', legend.title = element_blank(),axis.title.y=element_blank()) + scale_fill_brewer(type='seq', palette=1)
 
 @
 \caption{Relation between community attachment and k-means cluster solution.\label{clus1}}
@@ -846,8 +590,8 @@ prodplot(soul.red2, PROJWT ~ CCEGRP2+ Cluster.ID + YEAR, divider=c("vspine", "hs
 
 In Figure \ref{clus1} we can see how the clusters are related with the attached group. This plot is another product plot, but now there are three categorical variables combined: year, cluster id and attachment. The area of each box represents the joint proportion of people in one attachment level, cluster id and year. The vertical margin shows that each year is about a third of the total observations. Next within a year the width of the boxes represents the cluster proportions conditional on the year, the four clusters show a pretty uniform distribution. Finally within year and cluster, the height of the box is related to the proportion of each attachment level.  The distribution of attachment is stable across years. 
 
-Within cluster 3 the proportion of attached people is more than 75\% every year and there are almost no people who are not attached. On the opposite side, within cluster 4 most of the people are not attached to their community. This is not surprising recalling the cluster means from Figure \ref{para}. 
-Finally, in clusters 1 and 2 most of the people are in the neutral category. Intuitively having most of your friends and family in the same community where you live will make you feel more attached to it. However, clusters 1 and 2 are similar in terms of attachment but not in terms of family and friends living in the community. It may be that family and friends are not important to attachment. 
+Within cluster 1 the proportion of attached people is more than 75\% every year and there are almost no people who are not attached. On the opposite side, within cluster 2 most of the people are not attached to their community. This is not surprising recalling the cluster means from Figure \ref{para}. 
+Finally, in clusters 3 and 4 most of the people are in the neutral category. Intuitively having most of your friends and family in the same community where you live will make you feel more attached to it. However, clusters 3 and 4 are similar in terms of attachment but not in terms of family and friends living in the community. It may be that family and friends are not important to attachment. 
 
 \subsection{Residence stability}
 
@@ -881,7 +625,7 @@ qplot(data=life, x=prop.res, y=QSB, size=I(4), ylab='',xlab='Proportion of lifet
 aux1 <- subset(dat.cor, vars %in% c("prop.new.entry","av.rent","av.own" ) & type=='Attached')[,1:2]
 aux2   <- data.frame(vars='stay', cor=rho)
 aux3 <- rbind(aux1,aux2)
-description <-c('Average years Renting in current home', 'Average years owning the current home', 
+description <-c('Average years renting in current home', 'Average years owning the current home', 
               'Prop. of people not borned in the community', 'Proportion of age in current comunity')
 data.source <- c(rep('Census Bureau', 3), 'Knight-Gallup data')
 tab <- data.frame(Data=data.source,Description=description,Correlation=aux3$cor)
@@ -890,11 +634,11 @@ tab <- xtable(tab, caption='Correlation with attachment', label='lifetab')
 print(tab, caption.placement='top')
 @
 
-This relationship is explored in more depth using the attachment index instead of the attach group variable. The correlation between attachment index and all these 3 variables are presented in Table \ref{lifetab}. The correlation between attachment index and average proportion of people living in a community is $ \rho = \Sexpr{rho}$, which is in the same direction suggested by Figure \ref{stay}. This correlation constitutes a high correlation compared to the correlations reported in \cite{full2010} (largest correlation among attachment index and the other metric variables is 0.54, with social offerings). From  the \cite{acs2011}  data, the average years for current home owners and renters and the proportion of people who were not born in the community was computed.  The proportion of people attached to a community is negatively correlated with the average years in the same house (as renter or owner) and positively related to the proportion people that are new in the community. 
+This relationship is explored in more depth using the attachment index instead of the attach group variable. The correlation between attachment index and all these 3 variables are presented in Table \ref{lifetab}. The correlation between attachment index and average proportion of people living in a community is $ \rho = \Sexpr{rho}$, which is in the same direction suggested by Figure \ref{stay}. From  the \cite{acs2011}  data, the average years for current home owners and renters and the proportion of people who were not born in the community was computed.  The proportion of people attached to a community is negatively correlated with the average years in the same house (as renter or owner) and positively related to the proportion people that are new in the community. 
 
 The study of the relationship between attachment and how long people stay in the community might be done also with individual level information.  In the Knight questionnaire people are asked about their ``willingness to move''. By collapsing some of the levels of this variable, it is possible to focus on whether a person wants to move outside its neighborhood or not. 
 
-Table \ref{move} shows that among the attached people 19\% would like to move if they had the chance to do it and this proportion increases to 70\% among not attached people. On the other hand, 32 \% of the not attached people would like to stay in the same neighborhood while among attached people this proportion reaches 80\%. This suggests a positive association among the attached group and a longer stay in one community.  
+Table \ref{move} shows that among the attached people 19\% would like to move if they had the chance to do it and this proportion increases to 70\% among not attached people. On the other hand, 29 \% of the not attached people would like to stay in the same neighborhood while among attached people this proportion reaches 80\%. This suggests a positive association among the attached group and a longer stay in one community.  
 
 <<moving, dependson='data', echo=FALSE,results='asis'>>=
 
@@ -943,7 +687,7 @@ However, the years in which the survey took place were particularly bad years fo
 
 The bottom panel of Figure \ref{eco} presents the U.S. GDP growth rate in 2008, 2009, and 2010. A similar pattern is observed in both panels, suggesting the economic dimension is less related with attachment during the economic crisis. 
 \begin{figure}[hbpt]
-<<econ, dependson=c('data'), echo=FALSE,message=FALSE,warning=FALSE, fig.height=5>>=
+<<econ, dependson=c('data'), echo=FALSE,message=FALSE,warning=FALSE, fig.height=4>>=
 wt <- with(subset(soul,!is.na(PROJWT)), PROJWT)
 des.wt <- svydesign(ids=~1, strata=~QSB, weights=~wt, data=subset(soul,!is.na(PROJWT))) 
 vars  <- svyby(~ECONOMY+CCE, ~YEAR, des.wt, svyvar, keep.var=TRUE, na.rm=T)
@@ -966,7 +710,7 @@ A new variable indicating race was computed as a combination of racial group and
 The Blau index is defined as $D = 1- \sum p_i^2$ where $p_i$ is the proportion of the $i$-th group in the community.  This measure coincides with the Gini impurity measure used in statistics for decision tree related models\footnote{At the same time, Gini impurity measure is different than the Gini index used for measure income distribution in Section \ref{descri}} (as random forest). 
 \begin{figure}
 
-<<race, echo=FALSE, dependson=c( 'data' ), message=FALSE, fig.height=7>>= 
+<<race, echo=FALSE, dependson=c( 'data' ), message=FALSE, fig.height=4>>= 
 #relation between attached prop of white people and propo of.afro
 
 
@@ -1000,7 +744,7 @@ In this section key drivers to explain attachment were found. A random forest cl
 
 The most common use for the random forest classifier is for prediction, however the main objective is to identify the key variables to explain the attachment for each community instead of predict the attachment level.
 
-As mentioned in Section \ref{methods}, one output of a random forest classifier is an importance measure for the variables used to construct the forest. The variable importance measures are used to identify the key drivers of the attachment process. Additionally, groups of  communities based on these importance measures are created, so communities in the same cluster have a similar structure of key drivers to explain the emotional attachment. 
+As mentioned in Section \ref{methods}, one output of a random forest classifier is an importance measure for the variables used to construct the forest. The variable importance measures are used to identify the key drivers of the attachment process. Additionally, groups of communities based on these importance measures are created, so communities in the same cluster have a similar structure of key drivers to explain the emotional attachment. 
 
 There are two basic measures of variable importance in the \verb randomForest  function within R, only the \emph{mean decrease in Gini} ($DG$) was used. Each time a variable is used within a random forest classifier is associated with a decrease in the impurity of the data nodes, which is a measure with the Gini impurity index. Important variables will achieve larger reduction of impurity, then $DG$ can be used as a variable importance measurement.   
 
@@ -1014,15 +758,15 @@ qplot(data=rankings, x=rnk,y=dim,fill=V1,geom='tile', xlab='Ranking', ylab='') +
 \caption{Variable importance, color intensity indicates for how many communities a variable appears in each of the first five ranks. For instance, the most important (rank equals to 1) variable is 5.year.ahead for 22 out 26 communities. \label{imp1}}
 \end{figure}
 
-Within each community explanatory variables were ranked according to $DG$. Rank 1 represents the variable associated with the largest reduction in the data impurity. Figure \ref{imp1} shows variable importance, and color intensity indicates how many times a variable appears in each of the first five ranks. At a glance it is clear that 5.year.ahead, 5.year.ago and children, appears as the most important variables in most of the communities. The variable 5.year.ahead indicates the importance of forward looking, i.e. what do you expect from your community in 5 years, and this is the most important driver of attachment. 
+Within each community explanatory variables were ranked according to $DG$. Rank 1 represents the variable associated with the largest reduction in the data impurity. Figure \ref{imp1} shows variable importance, and color intensity indicates how many times a variable appears in each of the first five ranks. At a glance it is clear that 5.year.ahead, 5.year.ago and Meet.People, appears as the most important variables in most of the communities. The variable 5.year.ahead indicates the importance of forward looking, i.e. what do you expect from your community in 5 years, and this is the most important driver of attachment. 
 
-The variable 5.years.ago represents the perception of the community improvement, when comparing the community today with 5 years ago. Finally, the children variable indicates if the community is a good place for families with children.
+The variable 5.years.ago represents the perception of the community improvement, when comparing the community today with 5 years ago. Finally, the Meet.People variable indicates if the community is a good place to meet people and make friends.
 \begin{figure}[hbpt]
 << import.plot3, dependson=c('data'), echo=FALSE >>=
 aux <- soul.red2
 aux$QSB <- with(aux, reorder(QSB, -as.numeric(QSB) ))
 
-prodplot(aux, ~CCEGRP2+Q6A+QSB, divider=c("vspine","hspine",'hspine'),subset=level == 2)+aes(fill=CCEGRP2) + facet_wrap( facet=~QSB, scale='free',ncol=7) + theme( legend.title=element_blank(),axis.text.x=element_blank(),axis.text.y=element_blank(),  axis.title.y=element_blank(),axis.text.x=element_blank(),legend.position=c(.9,0.1) ) + scale_fill_brewer(type='seq', palette=1) 
+prodplot(aux, ~CCEGRP2+Q6A+QSB, divider=c("vspine","hspine",'hspine'),subset=level == 2)+aes(fill=CCEGRP2) + facet_wrap( facet=~QSB, scale='free',ncol=7) + theme( legend.title=element_blank(),axis.text.x=element_blank(),axis.text.y=element_blank(),  axis.title.y=element_blank(),axis.title.x=element_blank(),legend.position=c(.9,0.1) ) + scale_fill_brewer(type='seq', palette=1) 
 @
 \caption{Product plot of attachment against forward looking variable (5.year.ahead) by community. \label{fowardplot}}
 \end{figure}
@@ -1086,7 +830,7 @@ In this paper, we showed an exploratory analysis to find interesting facts about
 The main findings from the analysis are:
 \begin{itemize}
 
-\item The 26 communities are a geographically diverse group. Of those, the three main regions are: southeast, northeast and midwest, there are also two communities in California. From the Census Bureau data, we have found that most of the communities show a low proportion of 18-21 year olds and also a low proportion of people older than 55 years old. There were just a few communities that have large population of 18-21 year olds, (Grand Forks and State College) and larger older population (Palm Beach and Bradenton). There is large variability in education levels and economic conditions across the 26 communities. 
+\item The 26 communities are a geographically diverse group. Of those, the three main regions are: southeast, northeast and midwest, there are also two communities in California. From the Census Bureau data, we have found that most of the communities show a low proportion of 18-21 year old and also a low proportion of people older than 55 years old. There were just a few communities that have large population of 18-21 year old, (Grand Forks and State College) and larger older population (Palm Beach and Bradenton). There is large variability in education levels and economic conditions across the 26 communities. 
 
 \item Attachment proportion differs between communities, but it is always lower than $50\%$. It should be possible for every community to raise the attachment of their people. Using a graphical exploratory data analysis, we have found smaller communities tend to be more attached than larger ones. Also welcoming new residents people is an indicator of a more attached community. This explains that at a community level, there is a negative relationship between attachment and proportion of time lived in the community.
 
@@ -1113,25 +857,15 @@ Professor Di Cook helped with the analysis and reviewing the paper. Xiaoque Chen
 \caption{Variables used in the paper}
 \begin{tabular}{|l|p{10cm}|}\hline
 \textbf{Variable} & \textbf{Description} \\ \hline
-  Age & Number of people in age intervals \\
- Age.Fem & Average age among females  \\
- Bachelor Degree(Bachelor) & Proportion of people with Bachelor degree or higher \\
- Care & \\
- Gender &  gender, male and female  \\
- Gini & Gini index to measure income inequality between 0 to 1  \\
- Income per capita & Income per-capita in the past 12 months (in 2011 inflation-adjusted dollars in ) \\
- New.entry & Proportion of people moved into a community within last 5 years  \\
- Reputation & \\
- Satisfaction & How satisfied are you with this community as place to live ? \\
- Senior & Senior citizens \\
-1821.Yr& Proportion of people between 18 and 21 years old  \\
-5year.ahead & Compare with five years from now. How do you think this community will be as a place to live? \\
-5years.ago& How would you compare how this community is as a place to live today, compare to five years ago  \\
 Afri.pr&  Proportion of african-americans \\
+Age & Number of people in age intervals \\
+ Age.Fem & Average age among females  \\
 Aver.years.rent.in.community&Average of years renting in the community\\
 Average.years.own.in.community&Average of years owners in the community\\
-Beauty & Beauty of physical setting  \\
-Children & This community as a place to raise children \\
+ Bachelor Degree(Bachelor) & Proportion of people with Bachelor degree or higher \\
+ Beauty & Beauty of physical setting  \\
+ Care & How much people in this community care about each other\\
+ Children & This community as a place to raise children \\
 Colleges & Quality of colleges and universities  \\
 Economy & Economic conditions in this community  \\
 Education.Level & number of people based on educational attainment, three levels (less high school, high school, some college, bachelor of higher.)  \\
@@ -1140,20 +874,25 @@ Find.Job & Is now a good time to find a job ?  \\
 Friends & How many of your close friends live in your community?   \\
 Gay& Gay and lesbian people  \\
 GDP& Gross Domestic Product \\
+Gender &  gender, male and female  \\
+Gini & Gini index to measure income inequality between 0 to 1  \\
 Health & Quality of healthcare \\
 Housing& Affordable housing \\
 Immigrants& Immigrants from other countries\\
+Income per capita & Income per-capita in the past 12 months (in 2011 inflation-adjusted dollars in ) \\
 Job & Availability of job opportunities  \\
 Lead.Int& The leaders in my community represents my interest \\
 Leader & The leadership of the elected officials in your city \\
 Meet.People & Being a good place to meet people and make friends \\
 Minorities& Racial and ethnic minorities \\
+New.entry or Prop.new.entry& Proportion of people moved into a community within last 5 years  \\
 Night.Life& vibrant nightlife \\
 No.workers& Proportion of non working people  \\
 Owner.rate & Rate of house owners  \\
 Parks & Availability of outdoors, parks\\
 Perfect &  This community is the perfect place for people like me  \\
-Pro.female& Proportion of females\\
+Prop.bachelor&Proportion of people with Bachelor degree or higher \\
+Prop.female& Proportion of females\\
 Prop.house.2.per.1.worker& Proportion of houses with 2 persons and 1 worker\\
 Prop.house.3.per.2.worke&Proportion of houses with 3 persons with 2 workers\\
 Prop.house.3.per.3.worker& Proportion of houses with 3 workers\\
@@ -1163,23 +902,39 @@ Prop.male& Proportion of males\\
 Prop.militar& Proportion of militars in the community\\
 Prop.native.entry.90s& Proportion of US born who enter in the community in 90's \\
 Prop.native.entry.prev.80's&Proportion of US born who enter in the community previous to 80's \\
+Prop.1worker& Proportion of household with 1 worker\\
 Prop.owner.more.10.years& Proportion of owners for more than 10 years\\
 Prop.pop.bw.18.21& Proportion of population between 18 and 21 \\
+Prop.own& Proportion of owner\\
 Prop.rent.more.10.years& Proportion of people renting for more than 10 years\\
+Prop.2perhouse& Proportion of houses with two person\\
 Prop.unemployed& Proportion of unemployment\\
 Prop.white&Proportion of white\\
 Proud& I am proud to say I live in this community  \\
 Race diversity index & Blau index of race diversity  \\
-Refer & \\
-Residence.Years &  \\
+Refer & How likely are you to recommend this community to a friend or associate as a place to live\\
+Residence.Years &  How many years have you lived in this community \\
+Reputation &  This community has a good reputation to outsiders or visitors who do not live here \\
 Roads & Highway system \\
-Safe &  \\
+Safe & On a five-point rating scale, where 5 means completely safe and 1 means not at all safe, how would you rate how safe you feel walking alone at night within a mile of your home \\
+ Satisfaction & How satisfied are you with this community as place to live  \\
+ Senior & Senior citizens \\
 School & Overall quality of public schools \\
 size.community& number of people in the community\\
 Talented & Young, talented college graduates looking to enter the job market \\
-Unemp& Unemployment rate  \\  \hline
+Unemployment.rate& Unemployment rate  \\ \hline 
  \end{tabular}
 \end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|p{10cm}|}\hline
+1821.Yr& Proportion of people between 18 and 21 years old  \\
+5year.ahead & Compare with five years from now. How do you think this community will be as a place to live? \\
+5years.ago& How would you compare how this community is as a place to live today, compare to five years ago  \\ \hline
+ \end{tabular}
+\end{table}
+
  
 
 \end{document}
