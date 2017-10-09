@@ -10,11 +10,11 @@ file <- ll[-c(grep('sotc',ll),grep('PC',ll))]
 for (i in 1:length(file)) {
   aux <- read.csv(paste('data/',file[i],sep=''), header = T)
   aux %<>% filter(X=='Estimate') %>% 
-    mutate_each(funs(as.character), vars=-c(1:3) )  %>% 
-    mutate_each(funs(as.numeric), vars=-c(1:3) ) %>% 
+    mutate_at(vars(-c(1:3)), funs(as.character) )  %>% 
+    mutate_at(vars(-c(1:3)), funs(as.numeric) ) %>% 
     group_by(community)  %>%
-    summarise_each( funs(sum),vars=-c(1:3) )
-
+    summarise_at( vars(-c(1:2) ), funs(sum) )
+  
   aux$community <- factor(aux$community)  
   nam <- sub(pattern = ".csv", x = file[i], replacement = "")
   assign(nam, aux)
@@ -24,10 +24,10 @@ for (i in 1:length(file)) {
 aux <- read.csv("data/incomePC.csv", header = T)
 
 aux <- aux %>% filter(X=='Estimate') %>% 
-  mutate_each(funs(as.character), vars=-c(1:3) )  %>% 
-  mutate_each(funs(as.numeric), vars=-c(1:3) ) %>% 
+  mutate_at(vars(-c(1:3)), funs(as.character) )  %>% 
+  mutate_at(vars(-c(1:3)), funs(as.numeric) ) %>% 
   group_by(community)  %>%
-  summarise_each( funs(mean),vars=-c(1:3) )
+  summarise_at( vars(-c(1:2) ), funs(mean) )
 assign("incomePC", aux)
 
 remove(aux, nam, i, file, ll)
