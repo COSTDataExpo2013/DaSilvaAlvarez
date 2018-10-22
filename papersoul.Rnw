@@ -287,13 +287,13 @@ On the other hand, each table from the \cite{acs2011} has a different topic (see
 
 \begin{table}[h]
 \centering
-\caption{Sources of information and variables used in the analysis \label{des.var}}
+\caption{Sources of information and variables used in the analysis. \label{des.var}}
 \begin{tabular}{|c|l|p{10cm}|}\hline
  & \textbf{Variable Group}&\textbf{Description}\\ \hline
  \multicolumn{1}{ |c| }{\multirow{4}{*}[-12pt]{\rotatebox[origin=c]{90}{Knight survey data}}}
  & Original variables & There are 118 original variables, most of them consist of ordinal variables with a scale from 1 to 5. All these variables ask for the opinion about some aspect of community life.\\ \cline{2-3}
-& Demographic Variables &There are 30 demographic variables, these variables have information about, age, race, gender, etc.\\ \cline{2-3}
- & Recoded Variables&Some of questionnaire variables has been recoded in a scale from 1 to 3. \\ \cline{2-3}
+& Demographic variables &There are 30 demographic variables, these variables have information about, age, race, gender, etc.\\ \cline{2-3}
+ & Recoded variables & Some of questionnaire variables has been recoded in a scale from 1 to 3. \\ \cline{2-3}
  & Constructed variables & Using recoded variables, some summary variables have been made. These new variables are the base for the Gallup analysis of this data and represent the different sociological dimensions to be study. Some of these variables measure, economy level, social offerings, openness, safety, etc\\ \hline
  \multicolumn{1}{ |c| }{\multirow{7}{*}[-30pt]{\rotatebox[origin=c]{90}{Census Bureau data}}}
 & Age-Sex &  Total of people on each age group by gender. Proportions of female and the average age for each gender were computed \\ \cline{2-3}
@@ -306,7 +306,7 @@ On the other hand, each table from the \cite{acs2011} has a different topic (see
 \end{tabular}
 \end{table}
 
-The Knight survey data contains missing information. The proportion of missing values was computed for each observation (by cases) and for each variable (by variables). Table \ref{tab1} shows the quantiles of the proportion of missing values computed by case and computed by variable. Focusing on the proportions of missing values by case, there is 19\% of missing record for the most complete response. This may be explained by the fact that 3 years of data was combined although some variables only appeared in 1 or 2 years. On the other hand, focusing on the proportion of missing values by variables, most of the variables show a reasonable proportion of missing values (the median is 12\%) while there are a few variables with really high proportions of missing values.
+The Knight survey data contains missing information. The proportion of missing values was computed for each observation (by variables) and for each variable (by cases). Table \ref{tab1} shows the quantiles of the proportion of missing values computed by case and computed by variable. Focusing on the proportions of missing values by variables, there is 19\% of missing record for the most complete response. This may be explained by the fact that 3 years of data was combined although some variables only appeared in 1 or 2 years. On the other hand, focusing on the proportion of missing values by casess, most of the variables show a reasonable proportion of missing values (the median is 12\%) while there are a few variables with really high proportions of missing cases. 
 
 <<missing, echo=FALSE,dependson= 'data',results='asis'>>=
 miss <- is.na(soul)
@@ -341,13 +341,13 @@ Secondly, the set of variables with less than 25\% of missing cases are selected
 
 \subsection{Statistical methods}
 
-Supervised and unsupervised learning tools were used in this paper to answer the main questions presented in Section \ref{intro}. To present the results of statistical learning methods, different visualization devices were used to perform an exploratory analysis. In this section the main tools for graphical and statistical analysis are described.
+Supervised and unsupervised learning tools were used in this paper to answer the main questions presented in Section \ref{intro}. To present the results of statistical learning methods, different visualizations were used to perform an exploratory analysis. In this section the main tools for graphical and statistical analysis are described.
 
 \subsubsection{Product plots}
 
 \cite{wickham2011product} proposed a new framework for visualizing categorical data, where the area is proportional to the count (or proportion) of interest. The framework name, \emph{product plots}, comes from the relation of two types of products, the product of the conditional and marginal distribution to produce the joint distribution, and the product of height and width to produce an area. Then, it is possible to visualize \emph{simultaneously} the marginal probability of a variable and conditional probability with another variable of interest.
 
-Product plot is a very flexible framework, more than 20 visualizations previously described can be included in it \citep{wickham2011product}, like bar charts, spine plots \citep{hummel1996linked} and mosaic plots \citep{hartigan1981mosaics,friendly1994mosaic}. This framework is designed for study relations among categorical variables. However, it is easily adapted when the variables are continuous simply by binning variables.
+Product plot is a very flexible framework \citep{wickham2011product}, which incorporate displays like bar charts, spine plots \citep{hummel1996linked} and mosaic plots \citep{hartigan1981mosaics,friendly1994mosaic}. This framework is designed for study relations among categorical variables. However, it is easily adapted when the variables are continuous simply by binning variables.
 
 Considering again Figure \ref{pp1} for describing the relationship among attachment and openness. Each vertical bar consists of a conditional distribution of attachment for one quantile of openness. The width of the bars represent the marginal proportions for openness and each rectangular area represents the joint proportion of the cell.
 
@@ -355,14 +355,12 @@ The main variable of interest in this paper is the attachment level. Product plo
 
 \subsubsection{Clustering}
 
-Cluster analysis is an unsupervised technique and two ways to find clusters are used across this paper. Hierarchical agglomerative cluster is used to find clusters at the community level. This method starts with each point being its own cluster and they are recursively merged. Then, the ''merging history'' forms a hierarchical tree diagram called a dendrogram, which is a tool used to define the number of clusters (see Sec. 12.3.1 of \cite{izenman2008modern} for more details).
-
-Also, K-means clustering was used to find clusters at the individual level. The K-means algorithm, proposed by \cite{macqueen1967some}, starts with all observations assigned to $K$ initial clusters and cluster means are computed. Then in an iterative fashion observations are reassigned to minimize the within sums of squares of each cluster until a criterion of convergence has been met (see Sec. 12.4.1 of \cite{izenman2008modern} for more details).
+Cluster analysis is an unsupervised technique and two ways to find clusters are used across this paper. Hierarchical agglomerative cluster is used to find clusters at the community level. This clustering algorithm starts with each point being its own cluster and is recursively merged. Then, the ``merging history'' forms a hierarchical tree diagram called a dendrogram, which is a tool used to define the number of clusters (see Sec. 12.3.1 of \cite{izenman2008modern} for more details). Additionally, K-means clustering was used to find clusters at the individual level. The K-means algorithm, proposed by \cite{macqueen1967some}, starts with all observations assigned to $K$ initial clusters and cluster means are computed. Then in an iterative fashion observations are reassigned to minimize the within sums of squares of each cluster until a criterion of convergence has been met (see Sec. 12.4.1 of \cite{izenman2008modern} for more details).
 
 In Section \ref{descri} clusters of communities were found using information from \cite{acs2011}. The objective is to look for demographic similarities among the 26 communities. Visual inspection of the dendrogram was used in determining the number of clusters (dendrogram is not shown). In Section \ref{explo}, clusters of individuals with Knight survey data were found. The goal is to see how different attached people are from not attached people. K-means algorithm is used to find clusters of individuals, the number of clusters is determined computing the within sums of squares for consecutive numbers of clusters and deciding the number of cluster where there is no extra reduction in this quantity. Finally, in Section \ref{driver}, an importance index to determine attachment level is computed for each variable and groups of communities are found one more time using the variable importance index.
 
-\subsubsection{Random Forest}
-Random forest is a supervised learning technique proposed by \cite{breiman2001random}, based on tree predictors with extra randomness added in its construction. A tree predictor is a classifier which recursively partition the feature space looking for regions where the response variable is homogeneous (pure nodes). In order to build a forest, bootstrap samples from the data are selected and for each sample a tree classifier is grown. However, the constructed tree in each bootstrap sample only uses a random selection of variables to find the next feature partition. Then two sources of randomness are used, random selection of cases in the bootstrap sample and random selection of variables. Then the forest classifier is an ensemble of randomized trees, the forest prediction is determined with majority vote across trees (see Section 14.4 of \cite{izenman2008modern} for more details).
+\subsubsection{Random forest}
+Random forest is a supervised learning technique proposed by \cite{breiman2001random}, based on combining results from many tree predictors computed on bootstrap samples of the data. A tree predictor is a classifier which recursively partition the feature space looking for regions where the response variable is homogeneous (pure nodes). In order to build a forest, bootstrap samples from the data are selected and for each sample a tree classifier is grown. However, the constructed tree in each bootstrap sample only uses a random selection of variables to find the next feature partition. Then two sources of randomness are used, random selection of cases in the bootstrap sample and random selection of variables. Then the forest classifier is an ensemble of randomized trees, the forest prediction is determined with majority vote across trees (see Section 14.4 of \cite{izenman2008modern} for more details).
 
 Random forest classifiers are used to classify each individual into its attachment level. The goal is to identify what attaches people to their communities and differences among communities.
 For each community, a random forest classifier is fitted with attachment as the response. The goal is not to predict attachment level for one person, but to identify the important variables to predict attachment in one community. By doing this, key drivers of attachment are found. Among the randomized tree classifiers that form the forest, each variable is used many times for splitting the data set. Averaging the decreases in node impurity index over all trees is the Gini measure of variable importance.
@@ -389,7 +387,7 @@ aux.mer$cate[aux.mer$pop100 >= 20] <- 4
 p <- ggmap(mapp, extent = "device")
 p + geom_point(data = aux.mer, mapping = aes(lon, lat), size = 6*aux.mer$cate, alpha = .4) + xlab('') + ylab('') + theme(axis.text.x = element_blank(), axis.text.y = element_blank())
 @
-  \caption{Location of the 26 communities analyzed, size of dot represent population. Only two communities on the west coast. \label{map}}
+  \caption{Location of the 26 communities analyzed, size of dot represent population. Only two communities on the west coast are included. \label{map}}
 \end{figure}
 
 The \cite{acs2011} presents a population distribution among age groups and gender. There are 23 categories for age, most of them grouping 5 years together, and in each age category the midpoint is computed as a representative age for plotting. Figure \ref{age} shows the proportion of males and females by age category across all the communities.  The general profiles are very similar for all communities. In most communities, the proportion of people between 18 and 21 is around 5\%. However, there are five communities where the proportion of people between 18 and 21 is larger, Grand Forks (13\%), Milledgeville (12\%), Tallahassee (13\%), Boulder (9\%), and State College (22\%) of the total population. Communities with a larger proportion of people over 55 years old are Palm Beach and Bradenton.
@@ -409,7 +407,7 @@ dat.aux$community <- with(dat.aux, reorder(community, -prop1821) )
 qplot(data = dat.aux, x = variable,y = prop, colour = Gender, shape = Gender) + xlab("Age") + ylab("Proportion") + geom_line( ) + geom_point(size = I(.1)) + facet_wrap(facets =~community, ncol = 7) + theme(legend.position = c(.9,0.1)) + scale_color_brewer(type = 'qual', palette = 'Dark2')
 
 @
-\caption{Proportion of people by age category, horizontal axis is the midpoint age for each group. The line color and point shape represents the gender. Each facet is a community, sorted from top to bottom according to proportion of people between 18 and 21 years old. Similar age distribution across gender in all communities. Only State College and Grand Folks shows a peak on 18-21 years old. \label{age}}
+\caption{Proportion of people by age category. The line color and point shape represents the gender. Each facet is a community, sorted from top to bottom according to proportion of people between 18 and 21 years old. Only State College and Grand Folks shows a peak on 18-21 years old. \label{age}}
 \end{figure}
 
 \begin{figure}
@@ -475,12 +473,12 @@ census.data %>% select( c(colnames(census.data)[var.cl2],'cl.2' ) ) %>%
   xlab('') + ylab('') + 
   scale_color_brewer(type = 'qual', palette = 2, name = 'Group')
 @
-\caption{Parallel coordinate plot for community cluster means \label{cluster.cen}.  }
+\caption{Parallel coordinate plot for community cluster means. \label{cluster.cen} }
 \end{figure}
 
 As a final step in the socio-demographic characterization of the communities, cluster analysis on community characteristics was performed. For this analysis nine variables from the Census Bureau data are used: proportion of people between 18 and 21 years old (1821.yr), proportion of people with a bachelor degree (bachelor), the Gini inequality index (Gini), proportion of people who moved to the community after the year 2000 (new.entry), the average age of the female population (age.fem), the unemployment rate (unemp), no workers rate (no.worker), home owner rate (own.rate) and the proportion of African-Americans (afr.pr).
 
-To characterize the cluster a parallel coordinate plot \citep{inselberg1985plane} of the cluster means was used. Figure \ref{cluster.cen} shows the variables used in the horizontal axis and the variable mean of each cluster on the vertical axis. Group 1 are communities with older people, low education level and biggest home owner rate. Group 2 is formed by communities with large proportion of African-Americans and unequal income distribution. Bradenton and Palm Beach (entire group 3) are communities with older people, not working and not African-American. Group 4 is formed by four communities: Charlotte, Grand Forks, Long Beach and State College, all relatively younger people, with high education levels and non equitable income distribution.
+A parallel coordinate plot \citep{inselberg1985plane} is used to compare the cluster means for the variables used in the analysis. Figure \ref{cluster.cen} shows the variables used in the horizontal axis and the variable mean of each cluster on the vertical axis. Group 1 are communities with older people, low education level and biggest home owner rate. Group 2 is formed by communities with large proportion of African-Americans and unequal income distribution. Bradenton and Palm Beach (entire group 3) are communities with older people, not working and not African-American. Group 4 is formed by four communities: Charlotte, Grand Forks, Long Beach and State College, all relatively younger people, with high education levels and non equitable income distribution.
 
 A summary of our findings from this graphical exploration of \cite{acs2011} data:
 \begin{itemize}
@@ -558,7 +556,7 @@ aux2$var2 <- as.integer(aux2$variable)
 colnames(aux2)[1] <- 'Clusters'
 
 #,main='Mean Value Selected Variables Used in the K-means Cluster'
-qplot(data = aux2, var2, value, color = Clusters,shape = Clusters,xlab = '', ylab = '',size = I(3)) +geom_line(size = I(1)) + facet_wrap(~YEAR,nrow = 3) + theme(axis.text.x = element_text(angle = 90, size = I(15)), legend.position = 'bottom' ) + scale_x_discrete(breaks = 1:31, labels = lab) + scale_color_brewer(type='qual', palette='Paired')
+qplot(data = aux2, var2, value, color = Clusters,shape = Clusters,xlab = '', ylab = '',size = I(3)) +geom_line(size = I(.5)) + facet_wrap(~YEAR,nrow = 3) + theme(axis.text.x = element_text(angle = 90, size = I(15)), legend.position = 'bottom' ) + scale_x_discrete(breaks = 1:31, labels = lab) + scale_color_brewer(type='qual', palette='Paired')
 @
 \caption{Cluster mean points. Mean values for all the variables used to create the clusters in every year. \label{para}}
 \end{figure}
@@ -576,7 +574,7 @@ colnames(soul.red2)[ind] <- 'Cluster.ID'
 prodplot(soul.red2, PROJWT ~ CCEGRP2+ Cluster.ID + YEAR, divider=c("vspine", "hspine",'vspine'), subset = level == 2)+aes(fill = CCEGRP2) + theme(legend.position = 'bottom', legend.title = element_blank(),axis.title.y=element_blank()) + scale_fill_brewer(type='seq', palette=1)
 
 @
-\caption{Relation between community attachment and k-means cluster solution.\label{clus1}}
+\caption{Relation between community attachment and k-means cluster solution. Cluster 1 shows the higest attachment proportion while cluster 2 the lowest. Attachment distribution is stable within each grupo amont years. \label{clus1}}
 \end{figure}
 
 In Figure \ref{clus1} we can see how the clusters are related with the attached group. This plot is another product plot, but now there are three categorical variables combined: year, cluster id and attachment. The area of each box represents the joint proportion of people in one attachment level, cluster id and year. The vertical margin shows that each year is about a third of the total observations. Next within a year the width of the boxes represents the cluster proportions conditional on the year, the four clusters show a pretty uniform distribution. Finally within year and cluster, the height of the box is related to the proportion of each attachment level.  The distribution of attachment is stable across years.
@@ -629,7 +627,7 @@ This relationship is explored in more depth using the attachment index instead o
 
 The study of the relationship between attachment and how long people stay in the community might be done also with individual level information.  In the Knight questionnaire people are asked about their ``willingness to move''. By collapsing some of the levels of this variable, it is possible to focus on whether a person wants to move outside its neighborhood or not.
 
-Table \ref{move} shows that among the attached people 19\% would like to move if they had the chance to do it and this proportion increases to 70\% among not attached people. On the other hand, 29 \% of the not attached people would like to stay in the same neighborhood while among attached people this proportion reaches 80\%. This suggests a positive association among the attached group and a longer stay in one community.
+Table \ref{move} shows that among the attached people 19\% would like to move if they had the chance to do it and this proportion increases to 70\% among not attached people. On the other hand, 29\% of the not attached people would like to stay in the same neighborhood while among attached people this proportion reaches 80\%. This suggests a positive association among the attached group and a longer stay in one community.
 
 <<moving, dependson='data', echo=FALSE,results='asis'>>=
 
@@ -808,7 +806,7 @@ labs <- label(ddata_x)
 p2 + geom_text(data=labs, aes(label=label, x=x, y=-1.5))+coord_flip()+scale_y_reverse()+theme(legend.position = 'none',axis.title.x = element_blank(),axis.title.y = element_blank()) + ylim(c(10,-3))
 
 @
-\caption{Dendrogam of communities base on importance measures. Communities close to each other have similar structure of key drivers of attachment. \label{dendro}}
+\caption{Dendrogam of communities based on importance measures. Communities close to each other have similar structure of key drivers of attachment. \label{dendro}}
 \end{figure}
 
 Finally it is possible to identify communities with similar structure for its key drivers of attachment. Figure \ref{dendro} shows the dendrogram of communities using the importance measures from the random forest, communities which are grouped together are close in terms if key drivers of attachment. For instance, Detroit, Gary and Akron are the communities with lower levels of attachment and also they are close to each other in terms of the key drivers. However, is possible to find communities with similar structure key drivers but different levels of attachment, like Bradenton and Milledgeville.
@@ -833,7 +831,7 @@ The main findings from the analysis are:
 \end{itemize}
 
 \begin{acknowledgements}
-Professor Di Cook helped with the analysis and reviewing the paper. Xiaoque Cheng's mergeGui was used to create more amenable initial data. Israel Almodovar, Vianey Leos and Ricardo Martinez help us a lot proofreading our paper for final corrections.
+Professor Di Cook helped with the analysis and reviewing the paper. Xiaoyue Cheng's mergeGui was used to create more amenable initial data. Israel Almodovar, Vianey Leos and Ricardo Martinez helped us with proofreading our paper for final corrections.
 \end{acknowledgements}
 
 \bibliographystyle{spr-chicago}
