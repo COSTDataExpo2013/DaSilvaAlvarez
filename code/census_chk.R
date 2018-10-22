@@ -13,7 +13,7 @@ for (i in 1:length(file)) {
     mutate_at(vars(-c(1:3)), funs(as.character) )  %>% 
     mutate_at(vars(-c(1:3)), funs(as.numeric) ) %>% 
     group_by(community)  %>%
-    summarise_at( vars(-c(1:2) ), funs(sum) )
+    summarise_at( vars(-c(1:3) ), funs(sum) )
   
   aux$community <- factor(aux$community)  
   nam <- sub(pattern = ".csv", x = file[i], replacement = "")
@@ -27,7 +27,7 @@ aux <- aux %>% filter(X=='Estimate') %>%
   mutate_at(vars(-c(1:3)), funs(as.character) )  %>% 
   mutate_at(vars(-c(1:3)), funs(as.numeric) ) %>% 
   group_by(community)  %>%
-  summarise_at( vars(-c(1:2) ), funs(mean) )
+  summarise_at( vars(-c(1:3) ), funs(mean) )
 assign("incomePC", aux)
 
 remove(aux, nam, i, file, ll)
