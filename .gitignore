@@ -4,3 +4,13 @@
 .log
 .bbl
 .tex
+
+/figure/*
+/data/*
+/cache/*
+
+*.Rproj
+*.tex
+*.gz
+*.log
+*.pdf
