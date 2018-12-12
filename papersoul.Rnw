@@ -276,6 +276,13 @@ The paper is organized as follows. Section 2 describes the data sources and stat
 
 Two sources of information are used, data provided by the Knight Foundation and the other from the American Community Survey data from the Census Bureau. This section describes the sources and initial processing of the data, and the main statistical tools used for the analysis.
 
+Data from ACS are comunity variable, computed using sampling weights by Census Bureau. 
+When using data from Knight Foundation surveys, the sampling weights need to be taken into
+account, if thte data comes from only one year then the sampling weight is provided
+in the data, when all three year survey data are used, sampling weights are divided by three 
+so the total aggregate of each variable still can be consider an estimate of the comunity
+total.
+
 \subsection{Data description}
 The main data set used in this paper was provided by the Knight Foundation, consisting of collected data from 47821 people over three years (2008, 2009 and 2010) in 26 communities across the United States. The data is available at http://streaming.stat.iastate.edu/dataexpo/2013/ as part of the 2013 Data Expo competition (see \cite{soul} for additional details).
 
