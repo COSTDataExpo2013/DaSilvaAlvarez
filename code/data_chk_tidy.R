@@ -4,7 +4,11 @@ library(car)
 
 # Data contain on 'sotc.csv' file were pre-processed by Xiaoque Cheng with mergeGUI.
 soul <- read.csv("data/sotc.csv", header = T) %>%
-  mutate( CCEGRP2 = recode(CCEGRP, "'Engaged'='Attached';'Not Engaged'='Not Attached'")
+  mutate( CCEGRP2 = recode(CCEGRP, "'Engaged'='Attached';'Not Engaged'='Not Attached'"),
+          QD1gr = cut(QD1, breaks = c(0, 30, 40, 50, 60, 70, 80, 99), include.lowest = T),
+          QD2gr = cut(QD2, breaks = c(0, 10, 20, 50, 99), include.lowest = T), 
+          prop.res = ifelse(QD1==0, NA, QD2/QD1),
+          prop.gr = cut(prop.res, breaks = c(0, 0.25, 0.5, 1, 5.5), include.lowest = T)
   )
 
 
@@ -31,12 +35,7 @@ att.pr <- svyby(~CCEGRP2, ~QSB, des.wt, svymean, keep.var = TRUE, na.rm = T)
 
 soul <- soul %>%
   left_join(att.pr[, 1:2], by = "QSB") %>% 
-  mutate(QSB = reorder(QSB, CCEGRP2Attached), 
-         QD1gr = cut(QD1, breaks = c(0, 30, 40, 50, 60, 70, 80, 99), include.lowest = T),
-         QD2gr = cut(QD2, breaks = c(0, 10, 20, 50, 99), include.lowest = T), 
-         prop.res = ifelse(QD1==0, NA, QD2/QD1),
-         prop.gr = cut(prop.res, breaks = c(0, 0.25, 0.5, 1, 5.5), include.lowest = T)
-  ) %>%
+  mutate(QSB = reorder(QSB, CCEGRP2Attached)) %>%
   select( -CCEGRP2Attached )
 
 # Reduction of the data set to avoid missing value imputation.
