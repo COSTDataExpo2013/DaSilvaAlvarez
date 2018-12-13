@@ -120,7 +120,7 @@ reco.fun <- function(x) {
 }
 
 soul.red <- soul.red %>% 
-  mutate_all(funs(reco.fun)) %>%
+  mutate_at( .vars = vars( orig.red ), .funs = funs(reco.fun)) %>%
   mutate(Q11 = factor(recode(Q11, "'(Disabled/unable to work)' = 'Other '; '(Other) (do not list)'='Other '\n; 'Disabled/unable to work'='Other '; 'Temporarily laid off'='Other '\n; 'Unemployed and not looking for work'='Other '; '(DK)'='Non Response';'\n (Refused)'='Non Response' ")), 
          QD4 = factor(recode(QD4, "'(DK)' = 'Non Response' ;'(Refused)' = 'Non Response'")),
          QD6 = factor(recode(QD6, "c('Separated', 'Widowed', 'Separated, OR') = 'Divorced'; 'Never been married'\n = 'Single'; 'Living in a partnered relationship' = 'Married'; 'Now married' = 'Married'\n; '(DK)' = 'Non Response'; '(Refused)' = 'Non Response'")), 
@@ -128,6 +128,8 @@ soul.red <- soul.red %>%
          QD8 = factor(recode(QD8, "'Other (rent a room, live as a lodger, squatter, etc.)' = 'Other';'(DK)'='Non \n Response';'(Refused)' = 'Non Response'")), 
          QD9 = factor(recode(QD9, "c('Under $15,000','$15,000 to $24,999','$25,000 to $34,999') = 'Under 35k'; c\n ('$35,000 to $44,999','$45,000 to $54,999', '$55,000 to $74,999') = '35k to 75k'; c('$75\n , 000 to $99,999','$100,000 or over') = 'Over 75k'"))
   )
+
+soul.red$Q23[soul.red$Q23 == 9] <- NA
 
 # QD10 ask for hispanic or not hispanic, QD111 ask for race, we combine
 # both in QD111
@@ -139,14 +141,10 @@ aux[soul.red$QD10 == "Yes"] <- "Hispanic"
 soul.red$QD111 <- factor(aux)
 
 # new soul.red data with recode variables and no missing
-# soul.red2 <- data.frame(reco.aux, reco.demo, soul.red[, c("CCE", "YEAR", "CCEGRP2", "QSB", "WEIGHT", "PROJWT")])
-soul.red$Q23[soul.red$Q23 == 9] <- NA
-
 # the recodification creates a few new missing values that we don't want.
-aux <- apply(is.na(soul.red), 1, sum)
 
-soul.red <- soul.red %>% 
-  filter(aux == 0)
+new.miss <- apply(is.na(soul.red), 1, sum) # sum(new.miss > 0 )
+soul.red2 <- soul.red %>% filter(new.miss == 0)
 
 
 
