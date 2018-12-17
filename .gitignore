@@ -6,7 +6,6 @@
 .tex
 
 /figure/*
-/data/*
 /cache/*
 
 *.Rproj
