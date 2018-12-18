@@ -50,10 +50,11 @@ if (before && options$fig.show!= 'none') par(mar = c(4, 4, .1, .1), cex.lab = .9
 # packages
 
 # to be removed...
-#library(reshape2)
+library(reshape2)
 library(plyr)
 
 # data wrangling
+library(magrittr)
 library(tidyverse)
 library(stats)
 library(car)
@@ -100,7 +101,7 @@ census.data %<>%
         left_join(att.pr[, c("QSB", "CCEGRP2Attached", "CCEGRP2Not Attached")], by = "QSB") %>% 
         mutate(QSB = reorder(QSB, CCEGRP2Attached))
 
-soul.red2 <- soul.red2 %>%
+ soul.red2 %<>%
   mutate(cl.id = factor(km$cluster) )
 
 rankings <- important %>% 
@@ -121,15 +122,10 @@ This finding is illustrated in Figure \ref{pp1} with the product plot framework 
 
 \begin{figure}
 <<firstplot1, dependson='data',echo=FALSE, fig.height=6, fig.keep='all', out.width='0.48\\linewidth',message=FALSE,warning=FALSE>>=
+ soul%<>% 
+  mutate(Openess = cut(OPENNESS, breaks = quantile(OPENNESS, prob = seq(0,1, .2), na.rm = T), labels = c("Q1","Q2","Q3", "Q4", "Q5")), 
+         Social.Offering = cut(SOCIAL_O, breaks = quantile(SOCIAL_O, prob = seq(0, 1, .2), na.rm = T), labels = c("Q1","Q2","Q3", "Q4", "Q5")))
 
-br <-  with(soul, quantile(OPENNESS, prob = seq(0,1, .2), na.rm = T))
-soul$Openess <- with(soul, cut(OPENNESS, br))
-levels(soul$Openess) <- round(br, 1)
-
-
-br <-  with(soul,quantile(SOCIAL_O, prob = seq(0, 1, .2), na.rm = T))
-soul$Social.Offering <- with(soul, cut(SOCIAL_O, br))
-levels(soul$Social.Offering) <- round(br, 1)
 
 prodplot(data = soul, PROJWT/3 ~CCEGRP2 + Openess, divider = c("vspine", "hspine"), subset = level == 2) + aes(fill = CCEGRP2) + theme(legend.position = 'none',axis.title.y = element_blank()) + scale_fill_brewer(type = 'seq', palette = 1)
 
