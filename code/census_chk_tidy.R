@@ -183,7 +183,7 @@ prop.enter <- list(
 #################################################
 
 # 3) Put everything together in a dataset
-census.data.new <- list(
+census.data <- list(
   agesex, education, income, house.props, 
   owner, prop.enter, prop.origin, 
   prop.year, race, work.prop, 
