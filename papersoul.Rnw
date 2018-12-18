@@ -99,17 +99,19 @@ list2env(globalenv())
 lev <- soul %>% pull(QSB) %>% levels()
 
 census.data %<>%
-mutate(QSB = factor(QSB, labels = sort(lev))) %>%
-left_join(att.pr[, c("QSB", "CCEGRP2Attached", "CCEGRP2Not Attached")], by = "QSB") %>%
-mutate(QSB = reorder(QSB, CCEGRP2Attached))
+  mutate(QSB = factor(QSB, labels = sort(lev))) %>%
+  left_join(att.pr[, c("QSB", "CCEGRP2Attached", "CCEGRP2Not Attached")], by = "QSB") %>%
+  mutate(QSB = reorder(QSB, CCEGRP2Attached))
 
 soul.red2 %<>%
-mutate(cl.id = factor(km$cluster))
+  mutate(cl.id = factor(km$cluster))
 
 rankings <- important %>%
-filter(rnk < 6) %>%
-group_by(dim, rnk) %>% summarize(V1 = length(dim)) %>%
-ungroup() %>% mutate(rnk = factor(rnk, labels = paste("R", 1:5, sep = "")))
+  filter(rnk < 6) %>%
+  group_by(dim, rnk) %>% 
+  summarize(V1 = length(dim)) %>%
+  ungroup() %>% 
+  mutate(rnk = factor(rnk, labels = paste("R", 1:5, sep = "")))
 
 @
 
@@ -200,8 +202,9 @@ On the other hand, each table from the \cite{acs2011} has a different topic (see
 The Knight survey data contains missing information. The proportion of missing values was computed for each observation (by variables) and for each variable (by cases). Table \ref{tab1} shows the quantiles of the proportion of missing values computed by case and computed by variable. Focusing on the proportions of missing values by variables, there is 19\% of missing record for the most complete response. This may be explained by the fact that 3 years of data was combined although some variables only appeared in 1 or 2 years. On the other hand, focusing on the proportion of missing values by casess, most of the variables show a reasonable proportion of missing values (the median is 12\%) while there are a few variables with really high proportions of missing cases. 
 
 <<missing, echo=FALSE,dependson= 'data',results='asis'>>=
-miss <- is.na(soul)
+miss <- data.frame(is.na(soul))
 # Percentage per Case (1) and per variable (2)
+
 tab1 <- cbind(quantile(apply(miss[,orig], 1, mean) ),
             quantile(apply(miss[,reco], 1, mean)),
             quantile(apply(miss[,orig], 2, mean) ),
@@ -356,12 +359,23 @@ grps <- c("Boulder, CO", "San Jose, CA" ,"St. Paul, MN",
 "Macon, GA", "Miami, FL", "Milledgeville, GA", "Tallahassee, FL")
 
 aux <- census.data %>% filter( QSB %in% grps ) %>%
-  mutate(gr =factor(c(2, 1, 2, 2, 3, 3, 3, 1, 1, 3, 2)), h1 = c(1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1), v1 = c(0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0),
-         h2 = c(0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1), v2 = c(0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0))
+  mutate(gr = factor(c(2, 1, 2, 2, 3, 3, 3, 1, 1, 3, 2)),
+         h1 = c(1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1), 
+         v1 = c(0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0),
+         h2 = c(0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1),
+         v2 = c(0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0))
 
-ggplot(census.data, aes(gini, income.pc)) + geom_point(size = I(4)) + geom_text(data = aux, aes(gini,income.pc, label = QSB, color = gr, hjust = h1,vjust = v1), size = I(6)) + ylab('Income per capita') + xlab('Gini') + theme(legend.position = "none")
+ggplot(census.data, aes(gini, income.pc)) + 
+  geom_point(size = I(4)) + 
+  geom_text(data = aux, aes(gini,income.pc, label = QSB, color = gr, hjust = h1, vjust = v1), size = I(6)) + 
+  labs(y = 'Income per capita', x ='Gini') +
+  theme(legend.position = "none")
 
-ggplot(census.data, aes(Bachelor.s.degree.or.higher., income.pc)) + geom_point(size = I(4)) +  geom_text(data = aux, aes(Bachelor.s.degree.or.higher.,income.pc, label = QSB, color = gr, hjust = h2, vjust = v2), size = I(5))  + ylab('Income per capita') + xlab('Bachelor Degree') + theme(legend.position = "none")
+ggplot(census.data, aes(Bachelor.s.degree.or.higher., income.pc)) + 
+  geom_point(size = I(4)) +  
+  geom_text(data = aux, aes(Bachelor.s.degree.or.higher.,income.pc, label = QSB, color = gr, hjust = h2, vjust = v2), size = I(5))  + 
+  labs(y = 'Income per capita', x = 'Bachelor Degree') + 
+  theme(legend.position = "none")
 @
 \caption{Scatter plot of income per capita by Gini index (left) and scatter-plot of income per capita by proportion of people with bachelor degree (right). Colors identify some groups based on income and Gini. \label{ecolink}}
 \end{figure}
@@ -374,25 +388,31 @@ Different colors identify different groups based on income and Gini. The colored
 
 \begin{figure}[hbpt]
 <<cluster.cen, dependson=c('data','corplot'), echo=FALSE,message=FALSE,warning=FALSE>>=
-var.cl2 <- colnames(census.data) %in% c("aveageF","prop1821", "Bachelor.s.degree.or.higher." , "gini" , "own.rate" , "afri.prop",'prop.new.entry','un.rate',"prop.no.workers" )
-d2 <- dist(census.data[, var.cl2])
+# var.cl2 <- colnames(census.data) %in% c("aveageF","prop1821", "Bachelor.s.degree.or.higher." , "gini" , "own.rate" , "afri.prop",'prop.new.entry','un.rate',"prop.no.workers" )
+d2 <- census.data %>% select(aveageF, prop1821, Bachelor.s.degree.or.higher., gini , own.rate , afri.prop, prop.new.entry, un.rate, prop.no.workers ) %>% dist()
+
+# d2 <- dist(census.data[, var.cl2])
 hc2 <- hclust(d2, method = 'ward.D')
-census.data$cl.2 <- cutree(hc2,4)
+# census.data$cl.2 <- cutree(hc2, 4)
 
 # Characterize the clusters with the numerical variables
 nn <- c('cl.2', 'Age.Fem', '1821.Yr','Bachelor', 'Unemp','Gini','Own.rate', 'Afri.pr', 'No.workers', 'New.entry' )
 
-census.data %>% select( c(colnames(census.data)[var.cl2],'cl.2' ) ) %>% 
+census.data %>%
+  mutate(cl.2 = cutree(hc2, 4) ) %>% 
+  select( c(colnames(census.data)[var.cl2],'cl.2' ) ) %>% 
   group_by(cl.2) %>%
   summarise_all(funs(mean)) %>%
   setNames(nn) %>% ungroup() %>%
-  mutate(cl.2 = factor(cl.2)) %>%
+  mutate(cl.2 = factor(cl.2)) %>% 
   ggparcoord(columns = 2:10, scale = 'std', 
              groupColumn = 'cl.2', showPoints = T, 
-             order = c(3, 4, 6, 10, 2, 5, 9, 7, 8))  + 
+             order = c(4, 10, 2, 7, 8, 6, 3,5, 9))  + 
   theme(axis.text.x = element_text(angle = 90, size = I(15))) + 
-  xlab('') + ylab('') + 
+  labs(x = '', y = '') + 
   scale_color_brewer(type = 'qual', palette = 2, name = 'Group')
+  
+  # c(3, 4, 6, 10, 2, 5, 9, 7, 8)
 @
 \caption{Parallel coordinate plot for community cluster means. \label{cluster.cen} }
 \end{figure}
@@ -435,16 +455,7 @@ Figure \ref{corplot} shows the correlation among every variable and the proporti
 <<corplot, echo=FALSE, dependson=c('data'),cache=TRUE>>=
 # With Census data we want to describe communities
 
-# cors1 <- cor(x = census.data[, 2:63], y = census.data[, 64])
-# cors2 <- cor(x = census.data[, 2:63], y = census.data[, 65])
-# nm <- names(cors1[ rank(cors1) %in% c(1:10, 53:62), ])
-# dat.cor <- rbind(
-# data.frame(vars = rownames(cors1), cor = cors1[,1], positive = cors1[,1]>0, type = 'Attached') ,
-# data.frame(vars = rownames(cors2), cor = cors2[,1], positive = cors2[,1]>0, type = 'Not Attached') )
-# dat.cor2 <- subset(dat.cor, vars %in% nm)
-# dat.cor2$vars <- reorder(factor(dat.cor2$vars), (dat.cor2$cor) *(dat.cor2$type=='Attached'), mean)
-
-cors <- census.data.new %>% 
+cors <- census.data %>% 
   gather(vars, vv, -QSB, -CCEGRP2Attached, -`CCEGRP2Not Attached` ) %>%
   group_by(vars) %>% 
   summarise(
@@ -452,23 +463,38 @@ cors <- census.data.new %>%
     cor.noatt = cor(vv, `CCEGRP2Not Attached`, use = 'complete.obs') ) %>% 
   filter(!is.na(cor.att), vars != 'unemployed') %>% 
   filter(rank(cor.att) %in% c(1:10, 52:61) ) %>% 
-  mutate(vars =  fct_reorder(vars, cor.att) ) %>% 
+  mutate(vars =  fct_reorder(vars, cor.att) , vars = recode_factor(
+      vars, 
+      "av.own" = 'Aver.years.own.in.community',
+      "pop100"= 'size.community', 
+      "av.rent"= 'Average.years.rent.in.community',
+      "ow.prop10" = 'Prop.owner.more.10.years',
+      "prop.female" = 'Pro.female',
+      "prop2.1worker" = 'Prop.house.2.per.1.worker',
+      "prop.4.per" = 'Prop.house.4.per.or.more',
+      "ren.prop10" = 'Prop.rent.more.10.years',
+      "own.rate" = 'Prop.own',
+      "un.rate" = 'Unemployment.rate',
+      "prop1.worker" = 'Prop.1worker',
+      "Bachelor.s.degree.or.higher." = 'Prop.bachelor',
+      "prop3.3worker" = 'Prop.house.3.per.3.workers',
+      "prop.nat.entry.90s" = 'Prop.native.entry.90s',
+      "prop.nat.entry.80s" = 'Prop.native.entry.80s',
+      "militar" = 'Prop.militar',
+      "prop1821" = 'Prop.pop.bw.18.21',
+      "prop.entry.80s" = 'Prop.new.entry',
+      "prop.male" = 'Prop.male',
+      "prop.2.per" = 'Prop.2perhouse')) %>% 
   gather(type, vv, -vars) %>% 
-  mutate( type = factor(type, labels=c('Attached', 'Not Attached') ),
-          positive = factor(sign(vv), labels=c( 'Negative', 'Positive') ) )
+  mutate( type = factor(type, labels = c('Attached', 'Not Attached') ),
+          positive = factor(sign(vv), labels = c( 'Negative', 'Positive') ) )
 
 
-levels(dat.cor2$vars) <-  c('Aver.years.own.in.community','size.community','Average.years.rent.in.community','Prop.owner.more.10.years','Pro.female','Prop.house.2.per.1.worker','Prop.house.4.per.or.more','Prop.rent.more.10.years','Prop.own','Unemployment.rate','Prop.1worker','Prop.bachelor','Prop.house.3.per.3.workers','Prop.native.entry.90s','Prop.native.entry.80s','Prop.militar','Prop.pop.bw.18.21','Prop.new.entry','Prop.male','Prop.2perhouse')
+cors %>%
+  ggplot() +
+  geom_point(aes(y = vars, x = vv, color = positive), size = I(3)) +
+  facet_grid(~type) + theme(legend.position = 'bottom', legend.title = element_blank(), axis.text.y = element_text(size = I(15))) + labs(y = "", x = "Correlation")
 
-dat.cor2$positive <- factor(dat.cor2$positive)
-levels(dat.cor2$positive) <- c('Negative','Positive')
-
-qplot(data = dat.cor2, y = vars, x = cor, xlab = 'Correlation', ylab = '', color = positive, facets =~type, size = I(3)) + theme(legend.position= 'bottom', legend.title = element_blank(), axis.text.y = element_text(size = I(15)))
-
-# cors %>% 
-#   ggplot() + 
-#   geom_point(aes(y = vars, x=vv, color = positive)) +
-#   facet_grid(~type)
 
 @
 \caption{Correlations with attached and not attached proportion in order from top to bottom based on correlation with attached\label{corplot}. This plot shows the 10 more relevant variables with positive correlation and 10 with negative correlation with attachment.}
