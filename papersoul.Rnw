@@ -41,16 +41,16 @@ Using the same pre-processed variables as \cite{full2010} most likely will drive
 
 % All chunks that make models or data procesing, at the begining
 <<setup, include=FALSE, cache=FALSE,warning=FALSE,message=FALSE>>=
-options(replace.assign=TRUE,width=50)
-opts_chunk$set(fig.path='figure/graphics-', cache.path='cache/graphics-', fig.align='center', fig.width=8, fig.height=5, fig.show='hold', cache=TRUE, par=TRUE)
-knit_hooks$set(par=function(before, options, envir){
+options(replace.assign = TRUE, width = 50)
+opts_chunk$set(fig.path = 'figure/graphics-', cache.path = 'cache/graphics-', fig.align = 'center', fig.width = 8, fig.height=5, fig.show = 'hold', cache = FALSE, par = TRUE)
+knit_hooks$set(par = function(before, options, envir){
 if (before && options$fig.show!= 'none') par(mar = c(4, 4, .1, .1), cex.lab = .95, cex.axis = .9, mgp = c(2, .7, 0), tcl = -.3)
 }, crop = hook_pdfcrop)
 
 # packages
 
 # to be removed...
-library(reshape2)
+#library(reshape2)
 library(plyr)
 
 # data wrangling
@@ -74,30 +74,39 @@ library(reldist)
 library(xtable)
 
 
-Sys.setenv(TEXINPUTS=getwd(),
-           BIBINPUTS=getwd(),
-           BSTINPUTS=getwd())
+Sys.setenv(TEXINPUTS = getwd(),
+           BIBINPUTS = getwd(),
+           BSTINPUTS = getwd())
 @
 
 <<data,echo=FALSE,warning=FALSE,message=FALSE, cache=FALSE>>=
 # Procesing data sets from SOCT and Census Bureau
 source('code/data_chk_tidy.R')
 source('code/census_chk.R')
+# loading results from cluster and random forest models. 
+
+res_cluster <- readRDS('data/res_cluster.rds') %>% 
+  list2env(globalenv())
+  
+res_rf <- readRDS('data/res_rf.rds') %>% 
+  list2env(globalenv())
 
 # Compute comunity proportion of attached people
-lev <- levels(soul$QSB)
+lev <- soul %>% pull(QSB) %>% levels()
 census.data %<>%
-        mutate(QSB = factor(census.data$QSB, labels=sort(lev)) ) %>%
-        left_join(att.pr[, c(1,2,4)], by = "QSB") %>% 
+        mutate(QSB = factor(census.data$QSB, labels = sort(lev))) %>%
+        left_join(att.pr[, c("QSB", "CCEGRP2Attached", "CCEGRP2Not Attached")], by = "QSB") %>% 
         mutate(QSB = reorder(QSB, CCEGRP2Attached))
 
-# loading results from cluster and random forest models. 
-load('data/res_cluster.Rdta')
-load('data/res_rf.Rdta')
-soul.red2$cl.id <- factor(km$cluster)
-rankings <- ddply(subset(important, rnk < 6), .(dim, rnk), function(x) length(x$dim))
-rankings$rnk <- as.factor(rankings$rnk)
-levels(rankings$rnk) <- paste("R", 1:5, sep = "")
+
+soul.red2 <- soul.red2 %>%
+  mutate(cl.id = factor(km$cluster) )
+
+rankings <- important %>% 
+  filter( rnk < 6) %>% 
+  group_by(dim, rnk) %>% summarize(V1 = length(dim)) %>%
+  ungroup() %>% mutate(rnk = factor(rnk, labels = paste("R", 1:5, sep = "") ))
+
 @
 
  
@@ -115,6 +124,7 @@ This finding is illustrated in Figure \ref{pp1} with the product plot framework 
 br <-  with(soul, quantile(OPENNESS, prob = seq(0,1, .2), na.rm = T))
 soul$Openess <- with(soul, cut(OPENNESS, br))
 levels(soul$Openess) <- round(br, 1)
+
 
 br <-  with(soul,quantile(SOCIAL_O, prob = seq(0, 1, .2), na.rm = T))
 soul$Social.Offering <- with(soul, cut(SOCIAL_O, br))
