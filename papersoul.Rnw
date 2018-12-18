@@ -18,11 +18,11 @@
 
 \institute{Natalia da Silva \at
               Department of Statistics, Iowa State University 
-              \email{ndasilva@iastate.edu}
+              \email{natalia@iesta.edu.uy}
            \and
            Ignacio Alvarez \at
           Department of Statistics, Iowa State University 
-           \email{ialvarez@iastate.edu}
+           \email{nachalca@iesta.edu.uy}
            %S. Author \at
             %  second address
 }
@@ -84,30 +84,32 @@ Sys.setenv(TEXINPUTS = getwd(),
 # Procesing data sets from SOCT and Census Bureau
 source('code/data_chk_tidy.R')
 source('code/census_chk_tidy.R')
-# loading results from cluster and random forest models. 
+# loading results from cluster and random forest models.
 
-res_cluster <- readRDS('data/res_cluster.rds') %>% 
-  list2env(globalenv())
-  
-res_rf <- readRDS('data/res_rf.rds') %>% 
-  list2env(globalenv())
+res_cluster <- readRDS('data/res_cluster.rds') %>%
+list2env(globalenv())
+
+res_rf <- readRDS('data/res_rf.rds') %>%
+list2env(globalenv())
 
 # Compute comunity proportion of attached people
 # community labels differ from soul and census datasets
 
+
 lev <- soul %>% pull(QSB) %>% levels()
+
 census.data %<>%
-        mutate(QSB = factor(QSB, labels = sort(lev))) %>%
-        left_join(att.pr[, c("QSB", "CCEGRP2Attached", "CCEGRP2Not Attached")], by = "QSB") %>% 
-        mutate(QSB = reorder(QSB, CCEGRP2Attached))
+mutate(QSB = factor(QSB, labels = sort(lev))) %>%
+left_join(att.pr[, c("QSB", "CCEGRP2Attached", "CCEGRP2Not Attached")], by = "QSB") %>%
+mutate(QSB = reorder(QSB, CCEGRP2Attached))
 
- soul.red2 %<>%
-  mutate(cl.id = factor(km$cluster) )
+soul.red2 %<>%
+mutate(cl.id = factor(km$cluster))
 
-rankings <- important %>% 
-  filter( rnk < 6) %>% 
-  group_by(dim, rnk) %>% summarize(V1 = length(dim)) %>%
-  ungroup() %>% mutate(rnk = factor(rnk, labels = paste("R", 1:5, sep = "") ))
+rankings <- important %>%
+filter(rnk < 6) %>%
+group_by(dim, rnk) %>% summarize(V1 = length(dim)) %>%
+ungroup() %>% mutate(rnk = factor(rnk, labels = paste("R", 1:5, sep = "")))
 
 @
 
@@ -284,19 +286,46 @@ p + geom_point(data = aux.mer, mapping = aes(lon, lat), size = 6*aux.mer$cate, a
 
 The \cite{acs2011} presents a population distribution among age groups and gender. There are 23 categories for age, most of them grouping 5 years together, and in each age category the midpoint is computed as a representative age for plotting. Figure \ref{age} shows the proportion of males and females by age category across all the communities.  The general profiles are very similar for all communities. In most communities, the proportion of people between 18 and 21 is around 5\%. However, there are five communities where the proportion of people between 18 and 21 is larger, Grand Forks (13\%), Milledgeville (12\%), Tallahassee (13\%), Boulder (9\%), and State College (22\%) of the total population. Communities with a larger proportion of people over 55 years old are Palm Beach and Bradenton.
  \begin{figure}[hbpt]
-<<agesex, echo=FALSE, dependson='data',fig.height=7 >>=
+<<agesex, echo=FALSE, dependson='data',fig.height=7, message=FALSE >>=
 
-dat.aux <- melt(data = agesex, id.vars = c('community', 'prop1821'), measure.vars = c(4:26, 28:50))
-dat.aux$Gender <- rep( c('Male','Female'), each = 23*26)
-levels(dat.aux$variable)[24:46] <- levels(dat.aux$variable)[1:23]
-dat.aux$prop <- with(dat.aux, value/rep(agesex$Total., times=23*2))
+age_fig <- inner_join(agesex, dt.list$agesex) %>%
+  gather(variable, vv, contains("years")) %>%
+  mutate(
+    Gender = factor(str_sub(variable,-1) == '1', labels = c("Male", "Female")),
+    variable2 = str_replace_all(variable, c("s.1" = "s", "r.1" = "r")),
+    prop = vv / Total.,
+    age = recode_factor(
+      variable2,
+      "Under.5.years" = "2.5",
+      "X5.to.9.years" = "7",
+      "X10.to.14.years" = "12",
+      "X15.to.17.years" = "16",
+      "X18.and.19.years" = "18.5",
+      "X20.years" = "20",
+      "X21.years" = "21",
+      "X22.to.24.years" = "23",
+      "X25.to.29.years" = "27",
+      "X30.to.34.years" = "32",
+      "X35.to.39.years" = "37",
+      "X40.to.44.years" = "42",
+      "X45.to.49.years" = "47",
+      "X50.to.54.years" = "52",
+      "X55.to.59.years" = "57",
+      "X60.and.61.years" = "60.5",
+      "X62.to.64.years" = "63",
+      "X65.and.66.years" = "65.5",
+      "X67.to.69.years" = "68",
+      "X70.to.74.years" = "72",
+      "X75.to.79.years" = "77"  ,
+      "X80.to.84.years" = "82",
+      "X85.years.and.over" = "90"
+    ) %>% as.character()  %>% as.numeric(),
+    community =  fct_reorder(community,-prop1821)
+  ) %>%
+  arrange(Gender, age)
 
-p <- c(2.5, 7, 12, 16, 18.5, 20, 21, 23, 27, 32, 37, 42, 47, 52, 57, 60.5, 63, 65.5, 68, 72, 77, 82, 90)
-levels(dat.aux$variable) <- p
-dat.aux$variable <- as.numeric(as.character(dat.aux$variable))
-dat.aux$community <- with(dat.aux, reorder(community, -prop1821) )
 
-qplot(data = dat.aux, x = variable,y = prop, colour = Gender, shape = Gender) + xlab("Age") + ylab("Proportion") + geom_line( ) + geom_point(size = I(.1)) + facet_wrap(facets =~community, ncol = 7) + theme(legend.position = c(.9,0.1)) + scale_color_brewer(type = 'qual', palette = 'Dark2')
+ggplot(data = age_fig, aes( x = age, y = prop, colour = Gender, shape = Gender)) + xlab("Age") + ylab("Proportion") + geom_line( ) + geom_point() + facet_wrap(facets =~community, ncol = 7) + theme(legend.position = c(.9,0.1)) + scale_color_brewer(type = 'qual', palette = 'Dark2')
 
 @
 \caption{Proportion of people by age category. The line color and point shape represents the gender. Each facet is a community, sorted from top to bottom according to proportion of people between 18 and 21 years old. Only State College and Grand Folks shows a peak on 18-21 years old. \label{age}}
