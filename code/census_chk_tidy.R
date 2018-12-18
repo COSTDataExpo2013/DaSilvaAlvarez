@@ -1,6 +1,6 @@
 
-library(dplyr)
-library(tidyr)
+
+library(tidyverse)
 library(reldist)
 
 # 1) read data tables from census
@@ -29,8 +29,8 @@ dt.list$incomePC <- read.csv("data/incomePC.csv", header = T) %>%
 
 ############################################################
 # 2) create a data set with variables from every, topic. 
-#We compute some variables per topic and save it in census.data
-census.data <- agesex[, 1]
+# We compute some variables per topic and save it in census.data
+# census.data <- agesex[, 1]
 
 # 2.1 agesex has population by sex and age, 
 # the columns ending with '1' correspond to female population
@@ -62,7 +62,7 @@ education <- dt.list$education %>%
   un.rate =  unemployed/labor, 
   pr.rate = labor/Total.
   ) %>%
-  select( c(1:3,10, 17, 24, 31:37 ) ) %>%
+  select(community, Total., contains('school'), contains('degree'), unemployed:pr.rate ) %>% 
   gather(var, value, -community, -Total., -un.rate, -pr.rate) %>%
   mutate(prop = value/Total.) %>%
   select(-value, -Total.) %>%
@@ -75,18 +75,13 @@ rm(p, pp)
 p2 <- c(5, 12.5, 17, 22.5, 27, 32.5, 37.5, 42.5, 47.5, 55, 67.5, 87.5, 112.5, 137.5, 175, 200)
 pp2 <- matrix(p2, nrow = 26, ncol = 16, byrow = T)
 
-inc1 <- dt.list$income %>% 
-  mutate( av.income = (apply(dt.list$income[, -c(1, 2)] * pp2, 1, sum)/dt.list$income$Total.) * 1000, 
-          income.pc = (apply(dt.list$income[, -c(1, 2)] * pp2, 1, sum)/dt.list$agesex$Total.) * 1000)  %>% 
-  select(community, av.income, income.pc)
-
-inc2 <- dt.list$income %>% gather('grp', 'n', 3:18) %>%
+income <- dt.list$income %>% gather('grp', 'n', 3:18) %>%
   mutate(mid = rep(1000*p2, each=26)) %>% 
   group_by(community) %>% 
-  summarise( gini = gini(mid, n)) 
-
-income <- inner_join(inc1, inc2)
-rm(inc1, inc2, p2, pp2)
+  summarise( gini = gini(mid, n)) %>% 
+  mutate( av.income = (apply(dt.list$income[, -c(1, 2)] * pp2, 1, sum)/dt.list$income$Total.) * 1000)
+  
+rm(p2, pp2)
 
 # -------------------------------------------------------
 # 2.4 owner: 
@@ -135,9 +130,9 @@ house.props <- dt.list$workers %>%
 # working people proportions
 work.prop <- list(
   Total = dt.list$workers %>% select(1:6) %>% gather('worker', 'cnt.w', -c(1:2)) %>% rename(cnt.h = Total.),
-  `1per` = dt.list$workers %>% select(c(1,7:9)) %>% gather('worker', 'cnt.w',-c(1:2)) %>% rename(cnt.h = X1.person.household.),
-  `2per` = dt.list$workers %>% select(c(1,10:13)) %>% gather('worker', 'cnt.w', -c(1:2)) %>% rename(cnt.h = X2.person.household.),                    
-  `3per` = dt.list$workers %>% select(c(1,14:18)) %>% gather('worker', 'cnt.w', -c(1:2)) %>% rename(cnt.h = X3.person.household.)
+  per1 = dt.list$workers %>% select(c(1,7:9)) %>% gather('worker', 'cnt.w',-c(1:2)) %>% rename(cnt.h = X1.person.household.),
+  per2 = dt.list$workers %>% select(c(1,10:13)) %>% gather('worker', 'cnt.w', -c(1:2)) %>% rename(cnt.h = X2.person.household.),                    
+  per3 = dt.list$workers %>% select(c(1,14:18)) %>% gather('worker', 'cnt.w', -c(1:2)) %>% rename(cnt.h = X3.person.household.)
 ) %>% bind_rows(.id = 'house')  %>% 
   unite(ho_wk, house,worker) %>%
   mutate(prop = cnt.w / cnt.h) %>%
@@ -150,59 +145,49 @@ work.prop <- list(
 # year of etnry in the community, dividing by us origin or foreign. 
 
 # year of entry proportions
-prop.year <- yearentry %>% 
-  select(c(1:3, 8, 13, 18)) %>%  
-  gather('year', 'cnt', -c(1:2)) %>% 
+prop.year <- dt.list$yearentry %>% 
+  select(community, Total., contains('Entered') )  %>%  
+  gather('year', 'cnt', contains('Entered') ) %>% 
   mutate(prop = cnt / Total.) %>%
   select(community, year, prop) %>%
-  spread(year,prop)
-colnames(prop.year)[-1] <- c('prop.new.entry','prop.entry.90s','prop.entry.80s', 'prop.entry.prev.80s' )
+  spread(year,prop) %>%
+  set_names(nm = c('community','prop.new.entry','prop.entry.90s','prop.entry.80s', 'prop.entry.prev.80s' ))
+
 
 # origin proportions by year of entry
-prop.origin <- yearentry %>% 
-  select(c(1:2,4:7)) %>%  
-  inner_join(agesex[, 1:2], by='community') %>% 
+prop.origin <- dt.list$yearentry %>% 
+  select( -matches( '[[:digit:]]' ) ) %>%  
+  inner_join( select(dt.list$agesex, community, Total.), by='community' ) %>% 
   gather('from', 'cnt', -c(community, Total..y))  %>% 
   mutate(prop = cnt / Total..y) %>%
   select(community, from, prop) %>%
-  spread(from,prop)
-colnames(prop.origin)[-1] <- c('entered', 'entered.nat', 'entered.for', 'entered.for.nat.us', 'entered.for.not.us')
+  spread(from,prop) %>% 
+  set_names(nm = c('community','entered', 'entered.nat', 'entered.for', 'entered.for.nat.us', 'entered.for.not.us') )
 
-xx1 <- yearentry %>% select(1,3:5) %>% gather('orig', 'cnt', -c(1:2)) %>% mutate(date='ent2000') %>% rename(cnt.h = Entered.2000.or.later.)
-xx2 <- yearentry %>% select(1,8:10) %>% gather('orig', 'cnt', -c(1:2)) %>% mutate(date='ent90') %>% rename(cnt.h = Entered.1990.to.1999.)
-xx3 <- yearentry %>% select(1,13:15) %>% gather('orig', 'cnt', -c(1:2)) %>% mutate(date='ent80') %>% rename(cnt.h = Entered.1980.to.1989.)
-xx4 <- yearentry %>% select(1,18:20) %>% gather('orig', 'cnt', -c(1:2)) %>% mutate(date='ent_bef80') %>% rename(cnt.h = Entered.before.1980.)
-xx <- rbind(xx1,xx2,xx3,xx4)
+
 
 # origin proportions
-prop.enter <- xx %>% 
+
+prop.enter <- list( 
+  ent2000 =  dt.list$yearentry %>% select(1,3:5) %>% gather('orig', 'cnt', -c(1:2)) %>% rename(cnt.h = Entered.2000.or.later.),  
+  ent90 = dt.list$yearentry %>% select(1,8:10) %>% gather('orig', 'cnt', -c(1:2)) %>% rename(cnt.h = Entered.1990.to.1999.),
+  ent80 = dt.list$yearentry  %>% select(1,13:15) %>% gather('orig', 'cnt', -c(1:2)) %>% rename(cnt.h = Entered.1980.to.1989.),
+  ent_bef80 = dt.list$yearentry %>%  select(1,18:20) %>% gather('orig', 'cnt', -c(1:2))  %>% rename(cnt.h = Entered.before.1980.)
+) %>% bind_rows(.id = 'date') %>% 
   unite(org_dt, orig ,date) %>%
   mutate(prop = cnt / cnt.h) %>%
   select(community,org_dt, prop) %>%
-  spread(org_dt,prop)
-
-colnames(prop.enter)[-1] <- c(paste('prop.for', c('new.entry', paste('entry',c('90s', '80s', 'prev.80s'), sep='.' ) )  ,sep='.' ),  paste('prop.nat', c('new.entry', paste('entry',c('90s', '80s', 'prev.80s'), sep='.' ) )  ,sep='.' ) ) 
-yearentry <- cbind(yearentry, prop.origin[,-1], prop.year[,-1], prop.enter[,-1])
-
-census.data <- inner_join(census.data, yearentry[, c(1,23:38)], 'community')
-
-# --------------------------------------------------------------
-# 2.8) income per-capita
-census.data$income.pc <- incomePC$income.pc
-colnames(census.data)[1] <- "QSB"
-
-
+  spread(org_dt,prop) %>%
+  set_names(nm = c('community', paste('prop.for', c('new.entry', paste('entry',c('90s', '80s', 'prev.80s'), sep='.' ) )  ,sep='.' ),  paste('prop.nat', c('new.entry', paste('entry',c('90s', '80s', 'prev.80s'), sep='.' ) )  ,sep='.' ) ) 
+              )
 #################################################
+
 # 3) Put everything together in a dataset
+census.data.new <- list(
+  agesex, education, income, house.props, 
+  owner, prop.enter, prop.origin, 
+  prop.year, race, work.prop, 
+  dt.list$incomePC)  %>% 
+  reduce(inner_join, by = "community") %>% 
+  rename( QSB = community)
 
-# created variables from agesex table
-census.data <- inner_join(census.data, agesex[, c(1,51:57)], 'community')
-
-#add education variables
-census.data <- inner_join(census.data, cbind(education[, c(3, 10, 17, 24, 31:34)]/education$Total., education[, c(1,36, 37)]), 'community')
-
-# income
-census.data <-inner_join(census.data, income[, c(1,19:21)],'community' )
-
-# owner
-census.data <- inner_join(census.data, owner[, c(1,17:21)], 'community')

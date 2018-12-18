@@ -82,7 +82,7 @@ Sys.setenv(TEXINPUTS = getwd(),
 <<data,echo=FALSE,warning=FALSE,message=FALSE, cache=FALSE>>=
 # Procesing data sets from SOCT and Census Bureau
 source('code/data_chk_tidy.R')
-source('code/census_chk.R')
+source('code/census_chk_tidy.R')
 # loading results from cluster and random forest models. 
 
 res_cluster <- readRDS('data/res_cluster.rds') %>% 
@@ -92,12 +92,13 @@ res_rf <- readRDS('data/res_rf.rds') %>%
   list2env(globalenv())
 
 # Compute comunity proportion of attached people
+# community labels differ from soul and census datasets
+
 lev <- soul %>% pull(QSB) %>% levels()
 census.data %<>%
-        mutate(QSB = factor(census.data$QSB, labels = sort(lev))) %>%
+        mutate(QSB = factor(QSB, labels = sort(lev))) %>%
         left_join(att.pr[, c("QSB", "CCEGRP2Attached", "CCEGRP2Not Attached")], by = "QSB") %>% 
         mutate(QSB = reorder(QSB, CCEGRP2Attached))
-
 
 soul.red2 <- soul.red2 %>%
   mutate(cl.id = factor(km$cluster) )
@@ -270,7 +271,10 @@ library(mapproj)
 
 mapp <- get_googlemap(location = 'united states', zoom = 4, maptype = "terrain")
 
-aux.mer <- merge(lon.lat, census.data[, c(1, 7)], by.x = 'Community', by.y = 'QSB')
+aux.mer <- inner_join(lon.lat, 
+                 select(census.data.new, QSB,pop100), 
+                 by = c('Community'='QSB') )
+
 aux.mer$cate[aux.mer$pop100 < 3] <- 1
 aux.mer$cate[aux.mer$pop100 >= 3&aux.mer$pop100 < 8] <- 2
 aux.mer$cate[aux.mer$pop100 >= 8 & aux.mer$pop100 < 20] <- 3
@@ -405,17 +409,28 @@ Figure \ref{corplot} shows the correlation among every variable and the proporti
 \begin{figure}[hbpt]
 <<corplot, echo=FALSE, dependson=c('data'),cache=TRUE>>=
 # With Census data we want to describe communities
-cors1 <- cor(x = census.data[, 2:63], y = census.data[, 64])
-cors2 <- cor(x = census.data[, 2:63], y = census.data[, 65])
 
-nm <- names(cors1[ rank(cors1) %in% c(1:10, 53:62), ])
+# cors1 <- cor(x = census.data[, 2:63], y = census.data[, 64])
+# cors2 <- cor(x = census.data[, 2:63], y = census.data[, 65])
+# nm <- names(cors1[ rank(cors1) %in% c(1:10, 53:62), ])
+# dat.cor <- rbind(
+# data.frame(vars = rownames(cors1), cor = cors1[,1], positive = cors1[,1]>0, type = 'Attached') ,
+# data.frame(vars = rownames(cors2), cor = cors2[,1], positive = cors2[,1]>0, type = 'Not Attached') )
+# dat.cor2 <- subset(dat.cor, vars %in% nm)
+# dat.cor2$vars <- reorder(factor(dat.cor2$vars), (dat.cor2$cor) *(dat.cor2$type=='Attached'), mean)
 
-dat.cor <- rbind(
-data.frame(vars = rownames(cors1), cor = cors1[,1], positive = cors1[,1]>0, type = 'Attached') ,
-data.frame(vars = rownames(cors2), cor = cors2[,1], positive = cors2[,1]>0, type = 'Not Attached') )
-
-dat.cor2 <- subset(dat.cor, vars %in% nm)
-dat.cor2$vars <- reorder(factor(dat.cor2$vars), (dat.cor2$cor) *(dat.cor2$type=='Attached'), mean)
+cors <- census.data.new %>% 
+  gather(vars, vv, -QSB, -CCEGRP2Attached, -`CCEGRP2Not Attached` ) %>%
+  group_by(vars) %>% 
+  summarise(
+    cor.att = cor(vv, CCEGRP2Attached, use = 'complete.obs'),
+    cor.noatt = cor(vv, `CCEGRP2Not Attached`, use = 'complete.obs') ) %>% 
+  filter(!is.na(cor.att), vars != 'unemployed') %>% 
+  filter(rank(cor.att) %in% c(1:10, 52:61) ) %>% 
+  mutate(vars =  fct_reorder(vars, cor.att) ) %>% 
+  gather(type, vv, -vars) %>% 
+  mutate( type = factor(type, labels=c('Attached', 'Not Attached') ),
+          positive = factor(sign(vv), labels=c( 'Negative', 'Positive') ) )
 
 
 levels(dat.cor2$vars) <-  c('Aver.years.own.in.community','size.community','Average.years.rent.in.community','Prop.owner.more.10.years','Pro.female','Prop.house.2.per.1.worker','Prop.house.4.per.or.more','Prop.rent.more.10.years','Prop.own','Unemployment.rate','Prop.1worker','Prop.bachelor','Prop.house.3.per.3.workers','Prop.native.entry.90s','Prop.native.entry.80s','Prop.militar','Prop.pop.bw.18.21','Prop.new.entry','Prop.male','Prop.2perhouse')
@@ -424,6 +439,12 @@ dat.cor2$positive <- factor(dat.cor2$positive)
 levels(dat.cor2$positive) <- c('Negative','Positive')
 
 qplot(data = dat.cor2, y = vars, x = cor, xlab = 'Correlation', ylab = '', color = positive, facets =~type, size = I(3)) + theme(legend.position= 'bottom', legend.title = element_blank(), axis.text.y = element_text(size = I(15)))
+
+# cors %>% 
+#   ggplot() + 
+#   geom_point(aes(y = vars, x=vv, color = positive)) +
+#   facet_grid(~type)
+
 @
 \caption{Correlations with attached and not attached proportion in order from top to bottom based on correlation with attached\label{corplot}. This plot shows the 10 more relevant variables with positive correlation and 10 with negative correlation with attachment.}
 \end{figure}
