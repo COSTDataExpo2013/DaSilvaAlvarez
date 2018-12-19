@@ -449,7 +449,7 @@ It can be observed that most of the small communities have larger indices of att
 Figure \ref{corplot} shows the correlation among every variable and the proportion of people attached and not attached per community. It is constructed combining the attachment index in the Knight survey data with the community descriptive variables from Census Bureau. At the community level, proportion of houses with two people, proportion of males, and proportion of people moved into a community within last five years are positively associated with attached, showing correlations between .25 and .35. Interestingly, negative correlations are larger in absolute value, the average years living in the same place (renting or owning) and size of the community are the most negatively correlated variables with attached.
 
 \begin{figure}[hbpt]
-<<corplot, echo=FALSE, dependson=c('data'),cache=TRUE>>=
+<<corplot, echo=FALSE, dependson=c('data'),cache=TRUE, warning = FALSE>>=
 # With Census data we want to describe communities
 
 cors <- census.data %>% 
@@ -507,17 +507,17 @@ Figure \ref{para} is a parallel coordinate plot of the cluster means. The first 
 
 \begin{figure}[hbpt]
 <<cluster.plot1, dependson='cluster',echo=FALSE,message=FALSE,warning=FALSE,warning=FALSE,fig.height=6.5>>=
-lab <- c('Family','Refer','Perfect','Children','Leader','Proud', 'Lead. Int.','Talented','Job','Meet.People','
-         5year.ahead', 'School','Reputation','5year.ago', 'Care', 'Senior','Economy','Satisfaction','Health',
-         'Find.Job', 'Parks','Beauty','Roads','Housing','Night.Life', 'Minorities', 'Inmigrants', 'Gay', 'Safe','Colleges', 'Friends')
 
-aux2 <- subset(des.cl1, variable %in% levels(des.cl1$variable)[1:31])
-aux2$variable <- factor(aux2$variable)
-aux2$var2 <- as.integer(aux2$variable)
-colnames(aux2)[1] <- 'Clusters'
+des.cl1 %>% 
+  spread(vars,value) %>% 
+  select(Q25, QCE2, Q7E, Q3B, Q8D, Q8A, Q15AA, Q7L, Q9, Q3A, Q15AB, Q6A, Q3C, Q6, Q7I, Q7F, Q7K, Q8F, Q7M, Q7D, QCE1, Q7A, Q7B, Q7C, Q8C, Q8E, Q8B, Q7H, Q18, Q7G, Q24,YEAR,cl.id) %>% 
+  rename( Family = Q25, Refer = QCE2, Perfect = Q7E, Children = Q3B, Leader = Q8D, Proud = Q8A, Lead.Int. = Q15AA, Talented = Q7L, Job = Q9, Meet.People = Q3A, `5year.ahead` = Q15AB, School = Q6A, Reputation = Q3C, `5year.ago` = Q6, Care = Q7I, Senior = Q7F, Economy = Q7K, Satisfaction = Q8F, Health = Q7M, Find.Job = Q7D, Parks = QCE1, 
+Beauty = Q7A, Roads = Q7B, Housing = Q7C, Night.Life = Q8C, Minorities = Q8E, Inmigrants = Q8B, Gay = Q7H, Safe = Q18, Colleges = Q7G, Friends = Q24, Clusters = cl.id) %>% 
+ gather(vars, value, -Clusters,-YEAR) %>% 
+  ggplot(aes(x = vars, y = value, color = Clusters, shape = Clusters), size = I(3)) + labs(x = "", y = "") +  geom_point(size = I(2))  + geom_line(aes(group = Clusters)) + 
+  facet_wrap(~YEAR, nrow = 3) + theme(axis.text.x = element_text(angle = 90, size = I(15)), legend.position = 'bottom' ) + scale_color_brewer(type='qual', palette='Paired')
 
-#,main='Mean Value Selected Variables Used in the K-means Cluster'
-qplot(data = aux2, var2, value, color = Clusters,shape = Clusters,xlab = '', ylab = '',size = I(3)) +geom_line(size = I(.5)) + facet_wrap(~YEAR,nrow = 3) + theme(axis.text.x = element_text(angle = 90, size = I(15)), legend.position = 'bottom' ) + scale_x_discrete(breaks = 1:31, labels = lab) + scale_color_brewer(type='qual', palette='Paired')
+
 @
 \caption{Cluster mean points. Mean values for all the variables used to create the clusters in every year. \label{para}}
 \end{figure}
