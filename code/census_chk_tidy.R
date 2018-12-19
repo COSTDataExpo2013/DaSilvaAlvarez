@@ -54,11 +54,11 @@ agesex <- dt.list$agesex %>%
 # Universe: Pop between 25-64 years un rate
 education <- dt.list$education %>% 
   mutate( 
-  unemployed = rowSums( select(., contains('Unemployed')) ),
-  employed = rowSums(select(. , contains('Employed') ) ),
-  militar = rowSums(select(. , contains('In.Armed.Forces')) ), 
-  not.labor = rowSums(select(. , contains('Not.in.labor.force')) ),
-  labor = rowSums(select(. , contains('In.labor.force')) ),
+  unemployed = rowSums( select(., contains('Unemployed', ignore.case = FALSE)) ),
+  employed = rowSums(select(. , contains('Employed', ignore.case = FALSE) ) ),
+  militar = rowSums(select(. , contains('In.Armed.Forces', ignore.case = FALSE)) ), 
+  not.labor = rowSums(select(. , contains('Not.in.labor.force', ignore.case = FALSE)) ),
+  labor = rowSums(select(. , contains('In.labor.force', ignore.case = FALSE)) ),
   un.rate =  unemployed/labor, 
   pr.rate = labor/Total.
   ) %>%
@@ -183,7 +183,7 @@ prop.enter <- list(
 #################################################
 
 # 3) Put everything together in a dataset
-census.data.new <- list(
+census.data <- list(
   agesex, education, income, house.props, 
   owner, prop.enter, prop.origin, 
   prop.year, race, work.prop, 
