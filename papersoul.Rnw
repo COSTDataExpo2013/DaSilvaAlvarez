@@ -388,31 +388,28 @@ Different colors identify different groups based on income and Gini. The colored
 
 \begin{figure}[hbpt]
 <<cluster.cen, dependson=c('data','corplot'), echo=FALSE,message=FALSE,warning=FALSE>>=
-# var.cl2 <- colnames(census.data) %in% c("aveageF","prop1821", "Bachelor.s.degree.or.higher." , "gini" , "own.rate" , "afri.prop",'prop.new.entry','un.rate',"prop.no.workers" )
-d2 <- census.data %>% select(aveageF, prop1821, Bachelor.s.degree.or.higher., gini , own.rate , afri.prop, prop.new.entry, un.rate, prop.no.workers ) %>% dist()
 
-# d2 <- dist(census.data[, var.cl2])
+d2 <- census.data %>% 
+  select(aveageF, prop1821, Bachelor.s.degree.or.higher., gini , own.rate , afri.pro, prop.new.entry, un.rate, prop.no.workers ) %>%
+  dist()
+
 hc2 <- hclust(d2, method = 'ward.D')
-# census.data$cl.2 <- cutree(hc2, 4)
-
-# Characterize the clusters with the numerical variables
-nn <- c('cl.2', 'Age.Fem', '1821.Yr','Bachelor', 'Unemp','Gini','Own.rate', 'Afri.pr', 'No.workers', 'New.entry' )
 
 census.data %>%
-  mutate(cl.2 = cutree(hc2, 4) ) %>% 
-  select( c(colnames(census.data)[var.cl2],'cl.2' ) ) %>% 
+   mutate(cl.2 = cutree(hc2, 4) ) %>%
+     select(aveageF, prop1821, un.rate, Bachelor.s.degree.or.higher., gini , own.rate ,  prop.new.entry, afri.prop, prop.no.workers, cl.2) %>% 
   group_by(cl.2) %>%
   summarise_all(funs(mean)) %>%
-  setNames(nn) %>% ungroup() %>%
-  mutate(cl.2 = factor(cl.2)) %>% 
-  ggparcoord(columns = 2:10, scale = 'std', 
+  ungroup() %>%
+  rename(Age.Fem = aveageF, Yr.1821 = prop1821, Unemp = un.rate, Bachelor = Bachelor.s.degree.or.higher., Gini = gini, Own.rate = own.rate, New.entry = prop.new.entry, Afri.pr= afri.prop, No.workers = prop.no.workers, cl.2 = cl.2) %>% 
+  mutate(cl.2 = factor(cl.2)) %>%
+  ggparcoord(columns = 2:10, scale = 'std',
              groupColumn = 'cl.2', showPoints = T, 
-             order = c(4, 10, 2, 7, 8, 6, 3,5, 9))  + 
+             order = c(3, 5, 6, 8, 2, 4, 10, 7, 9))  + 
   theme(axis.text.x = element_text(angle = 90, size = I(15))) + 
   labs(x = '', y = '') + 
   scale_color_brewer(type = 'qual', palette = 2, name = 'Group')
   
-  # c(3, 4, 6, 10, 2, 5, 9, 7, 8)
 @
 \caption{Parallel coordinate plot for community cluster means. \label{cluster.cen} }
 \end{figure}
