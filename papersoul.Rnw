@@ -563,7 +563,7 @@ labs(y = '', x ='Proportion of lifetime living in the community') +
 \caption{Dot chart of communities sorted from top to bottom by attachment against the mean proportion of lifetime spent in the current community (stay). Communities where most of people are living longer are the less attached ones. \label{stay}}
 \end{figure}
 
-<<life.tab, dependson=c('corplot','life'),echo=FALSE, results='asis', cache=FALSE>>=
+<<life.tab, dependson=c('corplot','life'),echo=FALSE, results='asis', cache=FALSE, warning=FALSE>>=
 # check correlation for prop.new.entry, should be 0.13
 rho <- with(life, round(cor(CCE, prop.res),2) )
 
@@ -591,21 +591,38 @@ The study of the relationship between attachment and how long people stay in the
 Table \ref{move} shows that among the attached people 19\% would like to move if they had the chance to do it and this proportion increases to 70\% among not attached people. On the other hand, 29\% of the not attached people would like to stay in the same neighborhood while among attached people this proportion reaches 80\%. This suggests a positive association among the attached group and a longer stay in one community.
 
 <<moving, dependson='data', echo=FALSE,results='asis', cache=FALSE>>=
-levels(soul$Q5)[1:2] <- 'Non Response'
-levels(soul$Q5)[2:6] <- 'Move from your neighborhood'
-soul$Q5 <- factor(soul$Q5)
+soul %>% 
+  mutate(Q5 = recode_factor(Q5, "(DK)" = "Non Response", 
+    "(Refused)" = "Non Response",
+    "Move outside of (answer from Sc) but stay in the state" = "Move from your neighborhood",
+    "Move outside of this communitybut stay in the state" = "Move from your neighborhood",
+    "Move to another city and state altogether" = "Move from your neighborhood",
+    "Move to another neighborhood in (answer from Sc)" = "Move from your neighborhood", 
+    "Move to another neighborhood in this community" = "Move from your neighborhood")) %>%  
+  filter(!is.na(PROJWT)) %>% 
+  mutate(pr = PROJWT/3)  %>% 
+  svydesign(ids=~1, strata=~QSB, weights=~pr, data=.) %>% 
+  svyby(~Q5,~CCEGRP2, design = ., svymean,keep.var=FALSE, na.rm=T) %>% 
+  ftable() %>% data.frame() %>% 
+  mutate( Var2 = gsub('statistic.Q5', '', Var2) ) %>% 
+  spread(CCEGRP2, Freq) %>%  
+  xtable(caption='Willingness to move outside your neighborhood', label='move') %>% 
+  print(caption.placement='top')
 
-pr <- with(subset(soul, !is.na(PROJWT) ), PROJWT/3)
-des.pro <- svydesign(ids=~1, strata=~QSB, weights=~pr, data=subset(soul, !is.na(PROJWT) ) )
 
-tab <- svyby(~Q5,~CCEGRP2, des.pro, svymean,keep.var=FALSE, na.rm=T)
-tab <- round(100*ftable(tab), 2)
+# levels(soul$Q5)[1:2] <- 'Non Response'
+# levels(soul$Q5)[2:6] <- 'Move from your neighborhood'
+# soul$Q5 <- factor(soul$Q5)
 
-dt <- data.frame(matrix(tab[1:9], ncol=3))
-rownames(dt) <- levels(soul$Q5)
-colnames(dt) <- levels(soul$CCEGRP2)
-dt <- xtable(dt, caption='Willingness to move outside your neighborhood', label='move')
-print(dt, caption.placement='top')
+# pr <- with(subset(soul, !is.na(PROJWT) ), PROJWT/3)
+# des.pro <- svydesign(ids=~1, strata=~QSB, weights=~pr, data=subset(soul, !is.na(PROJWT) ) )
+# tab <- svyby(~Q5,~CCEGRP2, des.pro, svymean,keep.var=FALSE, na.rm=T)
+# tab <- round(100*ftable(tab), 2)
+# dt <- data.frame(matrix(tab[1:9], ncol=3))
+# rownames(dt) <- levels(soul$Q5)
+# colnames(dt) <- levels(soul$CCEGRP2)
+# dt <- xtable(dt, caption='Willingness to move outside your neighborhood', label='move')
+# print(dt, caption.placement='top')
 
 @
 Figure \ref{wrho} shows the correlation among attachment index and proportion of lifetime spent in the community at the individual level for each community. There is not a clear pattern in the correlation and in any case the values are close to the correlation observed at a the community level. None of the  correlations are larger than 0.2 in absolute value and for most communities there is a positive correlation between attached and proportion of lifetime lived in the community.
