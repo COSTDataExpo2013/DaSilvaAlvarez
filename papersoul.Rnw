@@ -390,7 +390,7 @@ Different colors identify different groups based on income and Gini. The colored
 <<cluster.cen, dependson=c('data','corplot'), echo=FALSE,message=FALSE,warning=FALSE>>=
 
 d2 <- census.data %>% 
-  select(aveageF, prop1821, Bachelor.s.degree.or.higher., gini , own.rate , afri.pro, prop.new.entry, un.rate, prop.no.workers ) %>%
+  select(aveageF, prop1821, Bachelor.s.degree.or.higher., gini , own.rate , afri.prop, prop.new.entry, un.rate, prop.no.workers ) %>%
   dist()
 
 hc2 <- hclust(d2, method = 'ward.D')
@@ -529,10 +529,9 @@ The only differences among means for clusters 3 and 4 are family and friends ind
 
 \begin{figure}[hbpt]
 <<cluster.plot2, dependson='data',echo=FALSE, fig.height=4,message=FALSE,warning=FALSE,warning=FALSE,fig.height=6.5>>=
-ind <- colnames(soul.red2) == 'cl.id'
-colnames(soul.red2)[ind] <- 'Cluster.ID'
 
-prodplot(soul.red2, PROJWT ~ CCEGRP2+ Cluster.ID + YEAR, divider=c("vspine", "hspine",'vspine'), subset = level == 2)+aes(fill = CCEGRP2) + theme(legend.position = 'bottom', legend.title = element_blank(),axis.title.y=element_blank()) + scale_fill_brewer(type='seq', palette=1)
+soul.red2 %>%  rename(Cluster.ID = cl.id ) %>% 
+prodplot(PROJWT ~ CCEGRP2 + Cluster.ID + YEAR, divider = c("vspine", "hspine",'vspine'), subset = level == 2) + aes(fill = CCEGRP2) + theme(legend.position = 'bottom', legend.title = element_blank(),axis.title.y = element_blank()) + scale_fill_brewer(type='seq', palette = 1)
 
 @
 \caption{Relation between community attachment and k-means cluster solution. Cluster 1 shows the higest attachment proportion while cluster 2 the lowest. Attachment distribution is stable within each grupo amont years. \label{clus1}}
@@ -553,29 +552,36 @@ The proportion of lifetime lived in the community and its mean value for each co
 <<life, dependson='data', echo=FALSE,fig.height=4,message=FALSE,warning=FALSE>>=
 
 ### VARIFICAR NOMBRES REPETIDOS EN SVYVAR !!!!!!!
-life <- svyby(~prop.res+QD1+CCE, ~QSB, des.wt, svymean, keep.var=TRUE, na.rm=T)
-lifevar <- svyby(~prop.res+CCE, ~QSB, des.wt, svyvar, keep.var=TRUE, na.rm=T)
+life <- svyby(~prop.res + QD1 + CCE, ~QSB, des.wt, svymean, keep.var = TRUE, na.rm = T)
+lifevar <- svyby(~prop.res + CCE, ~QSB, des.wt, svyvar, keep.var = TRUE, na.rm = T)
 lifevar$rho <- with(lifevar, V2/sqrt(V1*V4))
 
-qplot(data=life, x=prop.res, y=QSB, size=I(4), ylab='',xlab='Proportion of lifetime living in the community')+theme(axis.text.y = element_text( size=I(10)))
+ggplot(data = life, aes(x = prop.res, y = QSB), size = I(4)) + geom_point() +
+labs(y = '', x ='Proportion of lifetime living in the community') + 
+  theme(axis.text.y = element_text( size=I(10)))
 @
 \caption{Dot chart of communities sorted from top to bottom by attachment against the mean proportion of lifetime spent in the current community (stay). Communities where most of people are living longer are the less attached ones. \label{stay}}
 \end{figure}
 
 <<life.tab, dependson=c('corplot','life'),echo=FALSE, results='asis', cache=FALSE>>=
-aux1 <- subset(dat.cor, vars %in% c("prop.new.entry","av.rent","av.own" ) & type=='Attached')[,1:2]
-
+# check correlation for prop.new.entry, should be 0.13
 rho <- with(life, round(cor(CCE, prop.res),2) )
 
-aux2   <- data.frame(vars='stay', cor=rho)
-aux3 <- rbind(aux1,aux2)
-description <-c('Average years renting in current home', 'Average years owning the current home',
-              'Prop. of people not borned in the community', 'Proportion of age in current comunity')
-data.source <- c(rep('Census Bureau', 3), 'Knight-Gallup data')
-tab <- data.frame(Data=data.source,Description=description,Correlation=aux3$cor)
-row.names(tab) <- NULL
-tab <- xtable(tab, caption='Correlation with attachment', label='lifetab')
-print(tab, caption.placement='top')
+cors %>%  
+  filter(vars %in% c("Prop.new.entry", "Average.years.rent.in.community", "Aver.years.own.in.community") &  type =='Attached' ) %>% 
+  select(vars, vv) %>% rename(cor = vv) %>%
+  bind_rows(data.frame(vars = 'stay', cor = rho)) %>% 
+  mutate(Data =  c(rep('Census Bureau', 3), 'Knight-Gallup data'), 
+         Description = c( 'Average years owning the current home', 
+                          'Average years renting in current home', 
+                          'Prop. of people not borned in the community', 
+                          'Proportion of age in current comunity')) %>% 
+  rename(Correlation = cor) %>% 
+  select(Data, Description, Correlation) %>% 
+  xtable( caption='Correlation with attachment', label='lifetab') %>% 
+  print( caption.placement = 'top', include.rownames = FALSE)
+
+
 @
 
 This relationship is explored in more depth using the attachment index instead of the attach group variable. The correlation between attachment index and all these 3 variables are presented in Table \ref{lifetab}. The correlation between attachment index and average proportion of people living in a community is $ \rho = \Sexpr{rho}$, which is in the same direction suggested by Figure \ref{stay}. From  the \cite{acs2011}  data, the average years for current home owners and renters and the proportion of people who were not born in the community was computed.  The proportion of people attached to a community is negatively correlated with the average years in the same house (as renter or owner) and positively related to the proportion people that are new in the community.
