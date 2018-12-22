@@ -601,13 +601,13 @@ soul %>%
     "Move to another neighborhood in this community" = "Move from your neighborhood")) %>%  
   filter(!is.na(PROJWT)) %>% 
   mutate(pr = PROJWT/3)  %>% 
-  svydesign(ids=~1, strata=~QSB, weights=~pr, data=.) %>% 
-  svyby(~Q5,~CCEGRP2, design = ., svymean,keep.var=FALSE, na.rm=T) %>% 
+  svydesign(ids =~1, strata =~QSB, weights =~pr, data = .) %>% 
+  svyby(~Q5,~CCEGRP2, design = ., svymean,keep.var = FALSE, na.rm = T) %>% 
   ftable() %>% data.frame() %>% 
   mutate( Var2 = gsub('statistic.Q5', '', Var2) ) %>% 
   spread(CCEGRP2, Freq) %>%  
-  xtable(caption='Willingness to move outside your neighborhood', label='move') %>% 
-  print(caption.placement='top')
+  xtable(caption = 'Willingness to move outside your neighborhood', label = 'move') %>% 
+  print(caption.placement = 'top')
 
 
 # levels(soul$Q5)[1:2] <- 'Non Response'
