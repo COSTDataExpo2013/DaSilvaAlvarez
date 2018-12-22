@@ -643,13 +643,15 @@ However, the years in which the survey took place were particularly bad years fo
 The bottom panel of Figure \ref{eco} presents the U.S. GDP growth rate in 2008, 2009, and 2010. A similar pattern is observed in both panels, suggesting the economic dimension is less related with attachment during the economic crisis.
 \begin{figure}[hbpt]
 <<econ, dependson=c('data'), echo=FALSE,message=FALSE,warning=FALSE, fig.height=4>>=
-wt <- with(subset(soul,!is.na(PROJWT)), PROJWT)
-des.wt <- svydesign(ids=~1, strata=~QSB, weights=~wt, data=subset(soul,!is.na(PROJWT)))
-vars  <- svyby(~ECONOMY+CCE, ~YEAR, des.wt, svyvar, keep.var=TRUE, na.rm=T)
-vars <- mutate(vars[, 1:5], rho = with(vars, V2/sqrt(V1*V4)),gdp = c(-0.4,-3.5,3.0))
 
-rhos.m <- melt(vars, id.vars='YEAR',measure.vars=c('rho','gdp' ) )
-levels(rhos.m$variable) <- c('Attachment-Economy correlation', 'GDP Rate')
+des.wt.year <- svydesign(ids =~ 1, strata =~ QSB, weights =~ PROJWT, data = filter(soul,!is.na(PROJWT)))
+vars  <- svyby( ~ ECONOMY + CCE, ~ YEAR, des.wt.year, svyvar, keep.var = TRUE, na.rm = T)  
+vars <- mutate(vars[, 1:5], rho = with(vars, V2/sqrt(V1*V4)), gdp = c(-0.4,-3.5,3.0))
+
+rhos.m <- gather(vars, variable, value,rho,gdp) %>% 
+  select(YEAR, variable, value) %>% 
+  mutate(variable =  factor(variable, labels = c('Attachment-Economy correlation', 'GDP Rate')
+))
 
 ggplot(data = rhos.m, aes(x = YEAR, y = value)) + 
   labs(x = "", y = "", title = 'Evolution of Attachment-Economy correlation and GDP') +
