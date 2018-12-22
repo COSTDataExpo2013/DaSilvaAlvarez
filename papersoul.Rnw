@@ -614,12 +614,15 @@ Figure \ref{wrho} shows the correlation among attachment index and proportion of
 
 \begin{figure}
 <<life_seq, dependson=c('life'), echo=FALSE,fig.height=4,message=FALSE,warning=FALSE>>=
-# life$QSB <- with(life, factor(QSB, levels = rev(levels(QSB))))
 life %<>% life %>%
   mutate(QSB = factor(QSB, levels = rev(levels(QSB)))) 
 
 lifevar %>% data.frame() %>%  select(-starts_with('se')) %>%
-  ggplot(data =., x=QSB,ymax=rho,ymin=0, xlab='',geom='linerange', ylab='Correlation',size=I(2))  + theme(axis.text.y = element_text( size=I(10) ),axis.text.x = element_text(size=I(10), angle=90),axis.title.x = element_text(size=I(25)))
+  ggplot(aes(x = QSB, ymax = rho, ymin = 0)) +
+  geom_linerange(size = I(2)) +
+  labs(x = '',  y = "Correlation") +
+  theme(axis.text.y = element_text( size = I(10) ), axis.text.x = element_text(size = I(10), angle = 90), axis.title.x = element_text(size = I(25)))
+  
 @
 \caption{ Bar chart of correlations between attachment and lifetime living in the community within each community (ordered by attachment level). Only few communities shows negative correlation between attachment and lifetime living there. \label{wrho}}
 \end{figure}
@@ -648,7 +651,12 @@ vars <- mutate(vars[, 1:5], rho = with(vars, V2/sqrt(V1*V4)),gdp = c(-0.4,-3.5,3
 rhos.m <- melt(vars, id.vars='YEAR',measure.vars=c('rho','gdp' ) )
 levels(rhos.m$variable) <- c('Attachment-Economy correlation', 'GDP Rate')
 
-qplot(data=rhos.m, x=YEAR, y=value,xlab='',ylab='', geom=c('point','line')) +facet_grid(facets=variable~.,scales='free')+ ggtitle('Evolution of Attachment-Economy correlation and GDP')
+ggplot(data = rhos.m, aes(x = YEAR, y = value)) + 
+  labs(x = "", y = "", title = 'Evolution of Attachment-Economy correlation and GDP') +
+  geom_line() + geom_point() +
+  facet_grid(facets = variable~., scales = 'free') + 
+  ggtitle('Evolution of Attachment-Economy correlation and GDP')
+  
 @
 \caption{Attachment vs economic dimension. Top panel shows the correlation between attachment and economy index against time. Bottom panel shows the GDP growth rate against years. \label{eco}}
 \end{figure}
