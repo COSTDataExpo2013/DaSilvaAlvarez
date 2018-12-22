@@ -609,30 +609,17 @@ soul %>%
   xtable(caption = 'Willingness to move outside your neighborhood', label = 'move') %>% 
   print(caption.placement = 'top')
 
-
-# levels(soul$Q5)[1:2] <- 'Non Response'
-# levels(soul$Q5)[2:6] <- 'Move from your neighborhood'
-# soul$Q5 <- factor(soul$Q5)
-
-# pr <- with(subset(soul, !is.na(PROJWT) ), PROJWT/3)
-# des.pro <- svydesign(ids=~1, strata=~QSB, weights=~pr, data=subset(soul, !is.na(PROJWT) ) )
-# tab <- svyby(~Q5,~CCEGRP2, des.pro, svymean,keep.var=FALSE, na.rm=T)
-# tab <- round(100*ftable(tab), 2)
-# dt <- data.frame(matrix(tab[1:9], ncol=3))
-# rownames(dt) <- levels(soul$Q5)
-# colnames(dt) <- levels(soul$CCEGRP2)
-# dt <- xtable(dt, caption='Willingness to move outside your neighborhood', label='move')
-# print(dt, caption.placement='top')
-
 @
 Figure \ref{wrho} shows the correlation among attachment index and proportion of lifetime spent in the community at the individual level for each community. There is not a clear pattern in the correlation and in any case the values are close to the correlation observed at a the community level. None of the  correlations are larger than 0.2 in absolute value and for most communities there is a positive correlation between attached and proportion of lifetime lived in the community.
 
 \begin{figure}
 <<life_seq, dependson=c('life'), echo=FALSE,fig.height=4,message=FALSE,warning=FALSE>>=
-life$QSB <- with(life, factor(QSB, levels = rev(levels(QSB))))
+# life$QSB <- with(life, factor(QSB, levels = rev(levels(QSB))))
+life %<>% life %>%
+  mutate(QSB = factor(QSB, levels = rev(levels(QSB)))) 
 
 lifevar %>% data.frame() %>%  select(-starts_with('se')) %>%
-  qplot(data=., x=QSB,ymax=rho,ymin=0, xlab='',geom='linerange', ylab='Correlation',size=I(2))  + theme(axis.text.y = element_text( size=I(10) ),axis.text.x = element_text(size=I(10), angle=90),axis.title.x = element_text(size=I(25)))
+  ggplot(data =., x=QSB,ymax=rho,ymin=0, xlab='',geom='linerange', ylab='Correlation',size=I(2))  + theme(axis.text.y = element_text( size=I(10) ),axis.text.x = element_text(size=I(10), angle=90),axis.title.x = element_text(size=I(25)))
 @
 \caption{ Bar chart of correlations between attachment and lifetime living in the community within each community (ordered by attachment level). Only few communities shows negative correlation between attachment and lifetime living there. \label{wrho}}
 \end{figure}
