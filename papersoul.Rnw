@@ -70,6 +70,7 @@ library(randomForest)
 library(survey)
 library(fpc)
 library(reldist) 
+library(ggdendro)
 
 # write report
 library(xtable)
@@ -763,21 +764,27 @@ Some variable can be identified as relatively most important for communities wit
 
 \begin{figure}
 <<import.plot4, dependson='data',echo=FALSE, fig.height=5, fig.width=8,message=FALSE,warning=FALSE,warning=FALSE, fig.keep='all'>>=
-library(ggdendro)
-
-xx <- dcast(important[,c('dim','QSB','mdg.pr')], QSB~dim)
-rownames(xx) <- xx$QSB
-d <- dist( xx[,-1] )
-hc <- hclust(d, method='ward')
-xx$comu.cl <- as.numeric(cutree(hc,5))
-
-dd.row <- as.dendrogram(hc)
-ddata_x <- dendro_data(dd.row)
-p2 <- ggplot(segment(ddata_x))+geom_segment(aes(x=x, y=y, xend=xend, yend=yend),extent = "device")
-labs <- label(ddata_x)
 
 
-p2 + geom_text(data=labs, aes(label=label, x=x, y=-1.5))+coord_flip()+scale_y_reverse()+theme(legend.position = 'none',axis.title.x = element_blank(),axis.title.y = element_blank()) + ylim(c(10,-3))
+xx <- important %>% 
+  select(dim, QSB, mdg.pr) %>% 
+  spread(dim, mdg.pr) 
+
+hc <- xx[,-1]  %>% 
+  data.frame() %>% 
+  `rownames<-`(xx$QSB) %>%  
+  dist( ) %>% 
+  hclust( method = 'ward')
+
+xx %<>% mutate(comu.cl = as.numeric(cutree(hc,5))) 
+
+ddata_x <- dendro_data(as.dendrogram(hc))
+
+ggplot(segment(ddata_x)) + 
+  geom_segment(aes(x = x, y = y, xend = xend, yend = yend),extent = "device") +
+  geom_text(data = label(ddata_x), aes(label = label, x = x, y = -1.5)) + 
+  coord_flip() + scale_y_reverse() + 
+  theme(legend.position = 'none',axis.title.x = element_blank(),axis.title.y = element_blank()) + ylim(c(10,-3))
 
 @
 \caption{Dendrogam of communities based on importance measures. Communities close to each other have similar structure of key drivers of attachment. \label{dendro}}
