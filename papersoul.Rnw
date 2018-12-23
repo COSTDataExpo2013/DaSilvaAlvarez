@@ -773,7 +773,14 @@ aux <- subset(important, dim2 %in% levels(dim2)[1:10])
 
 aux$dim2 <- recode(aux$dim2,"'Q15AB'='Lead.Int';'Q9'='Economy';'Q8A'='Talented';'Q7M'='Care';'Q7K'='Health';'Q7G'='Colleges';'Q7F'='Schools';'Q7B'='Beauty';'Q6A'='5year.ahead';'Q6'='5year.ago'")
 
-ggplot(data = aux, aes(x = fct_reorder(dim2, rmdg, max), y = QSB, fill = rmdg )) +
+a <- aux %>% select(QSB,dim2, rmdg) %>% spread(dim2,rmdg) %>% 
+  select(-QSB) %>% cor() 
+
+cl <- abs(1-a) %>%  as.dist() %>% hclust( method = 'ward.D')
+
+
+
+ggplot(data = aux, aes(x = fct_relevel(dim2, cl$labels[cl$order]), y = QSB, fill = rmdg )) +
   geom_tile() +
   theme(axis.text.x = element_text(angle = 90, size = I(12)), axis.title.x = element_blank() )  + scale_fill_gradient(low = "white", high = "red") + theme(legend.position = 'none')
 
