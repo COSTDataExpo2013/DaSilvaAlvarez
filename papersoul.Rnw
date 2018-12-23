@@ -266,25 +266,28 @@ Figure \ref{map} shows the communities location, most are from the East Coast of
 \begin{figure}[hbpt]
 \centering
 <<mapita,dependson='data',echo=FALSE, fig.height=6,message=FALSE,warning=FALSE,warning=FALSE, cache=TRUE>>=
-lon.lat <- read.table('lon.lat.txt',header=T)
-library(ggmap)
-library(mapproj)
+lon.lat <- read.table('lon.lat.txt',header=T) %>% 
+  inner_join( select(census.data, QSB, pop100), by = c('Community'='QSB') ) %>% 
+  mutate( popSize = cut(pop100, 
+                        breaks = c(0, 3, 8, 20, 50),
+                        labels = 1:4) )
+                    
+us <- map_data("state")
 
-mapp <- get_googlemap(location = 'united states', zoom = 4, maptype = "terrain")
-
-aux.mer <- inner_join(lon.lat, 
-                 select(census.data.new, QSB,pop100), 
-                 by = c('Community'='QSB') )
-
-aux.mer$cate[aux.mer$pop100 < 3] <- 1
-aux.mer$cate[aux.mer$pop100 >= 3&aux.mer$pop100 < 8] <- 2
-aux.mer$cate[aux.mer$pop100 >= 8 & aux.mer$pop100 < 20] <- 3
-aux.mer$cate[aux.mer$pop100 >= 20] <- 4
-
-p <- ggmap(mapp, extent = "device")
-p + geom_point(data = aux.mer, mapping = aes(lon, lat), size = 6*aux.mer$cate, alpha = .4) + xlab('') + ylab('') + theme(axis.text.x = element_blank(), axis.text.y = element_blank())
+ggplot() + 
+  geom_path(data = us, aes(long, lat, group=group), color = 'grey' ) +
+  geom_point(data=lon.lat, aes(x=lon, y=lat, size = pop100), alpha = .5) +
+  xlab('') + ylab('') + 
+  scale_size(range = c(5,20)) + 
+  scale_color_brewer(type = 'seq') +
+  theme(axis.text.x = element_blank(), axis.text.y = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.ticks = element_blank(),
+        axis.text = element_blank(), 
+        legend.position = 'none')
 @
-  \caption{Location of the 26 communities analyzed, size of dot represent population. Only two communities on the west coast are included. \label{map}}
+\caption{Geographical location of the 26 communities in the data, dot's size represents population. Only two communities on the west coast are included. \label{map}}
 \end{figure}
 
 The \cite{acs2011} presents a population distribution among age groups and gender. There are 23 categories for age, most of them grouping 5 years together, and in each age category the midpoint is computed as a representative age for plotting. Figure \ref{age} shows the proportion of males and females by age category across all the communities.  The general profiles are very similar for all communities. In most communities, the proportion of people between 18 and 21 is around 5\%. However, there are five communities where the proportion of people between 18 and 21 is larger, Grand Forks (13\%), Milledgeville (12\%), Tallahassee (13\%), Boulder (9\%), and State College (22\%) of the total population. Communities with a larger proportion of people over 55 years old are Palm Beach and Bradenton.
