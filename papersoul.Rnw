@@ -273,8 +273,8 @@ lon.lat <- read.table('lon.lat.txt',header=T) %>%
 us <- map_data("state")
 
 ggplot() + 
-  geom_path(data = us, aes(long, lat, group=group), color = 'grey' ) +
-  geom_point(data=lon.lat, aes(x=lon, y=lat, size = pop100), alpha = .5) +
+  geom_path(data = us, aes(long, lat, group = group), color = 'grey' ) +
+  geom_point(data = lon.lat, aes(x = lon, y = lat, size = pop100), alpha = .5) +
   xlab('') + ylab('') + 
   scale_size(range = c(5,20)) + 
   scale_color_brewer(type = 'seq') +
@@ -675,10 +675,11 @@ The Blau index is defined as $D = 1- \sum p_i^2$ where $p_i$ is the proportion o
 # QD10 ask for hispanic or not hispanic, QD111 ask for race, we combine both in QD111
 
 aux <- soul$QD111
+
 levels(aux)[c(4,6:10,15:17,19,20) ] <- 'Other'
 levels(aux)[c(1,2,5,7,8,10) ] <- 'Non Response'
 levels(aux)[2] <- 'Hispanic'
-aux[soul$QD10=='Yes'] <- 'Hispanic'
+aux[soul$QD10 == 'Yes'] <- 'Hispanic'
 soul$race  <- factor(aux)
 
 wt <- with(subset(soul, !is.na(PROJWT) & YEAR!=2010), PROJWT/2 )
@@ -690,7 +691,7 @@ b <- merge(census.data,tab[,c('QSB','diver','statistic.raceWhite') ], by='QSB')
 
 rho.div <- with(tab, round(cor(diver, statistic.CCE),2))
 
-qplot(data=tab, diver,logit(statistic.CCEGRP2Attached),size=I(5)) + theme(axis.text.y = element_text( size=I(10)) ) + ylab('Proportion of Attach (logit scale)') + xlab('Race diversity index') + geom_smooth(se=FALSE, method='lm', size=I(1))
+ggplot(data = tab, aes(x = diver, y = logit(statistic.CCEGRP2Attached))) + geom_point(size = I(5)) + theme(axis.text.y = element_text( size = I(10)) ) + labs( y = 'Proportion of Attach (logit scale)', x = 'Race diversity index') + geom_smooth(se = FALSE, method = 'lm', size = I(1))
 
 @
 \caption{Scatter plot of  attachment proportion by race diversity index. \label{raceplot}}
@@ -709,10 +710,27 @@ There are two basic measures of variable importance in the \verb randomForest  f
 
 \begin{figure}[hbpt]
 <<import.plot1, dependson='data',echo=FALSE, fig.height=5,message=FALSE,warning=FALSE>>=
-rankings$dim <- factor(rankings$dim)
-rankings$dim <- recode(rankings$dim,"'QD2'='Residence.Years';'QD1'='Age';'Q15AB'='Lead.Int';'QD9'='Income';'Q9'='Economy';'Q8F'='Senior';'Q8D'='Children';'Q7M'='Care';'Q7L'='Leader';'Q7K'='Health';'Q7I'='Meet.People';'Q7G'='Colleges';'Q7F'='Schools';'Q7B'='Beauty';'Q6A'='5year.ahead';'Q6'='5year.ago'")
+rankings %>% mutate(dim = recode_factor(factor(dim),
+                                        'QD2'='Residence.Years',
+                                        'QD1'='Age',
+                                        'Q15AB'='Lead.Int',
+                                        'QD9'='Income',
+                                        'Q9'='Economy',
+                                        'Q8F'='Senior',
+                                        'Q8D'='Children',
+                                        'Q7M'='Care',
+                                        'Q7L'='Leader',
+                                        'Q7K'='Health',
+                                        'Q7I'='Meet.People',
+                                        'Q7G'='Colleges',
+                                        'Q7F'='Schools',
+                                        'Q7B'='Beauty',
+                                        'Q6A'='5year.ahead',
+                                        'Q6'='5year.ago' )) %>% 
+  ggplot( aes(x = rnk, y = fct_reorder(dim, V1, max), fill = V1)) +
+  geom_tile() + scale_fill_gradient(limits = c(0,26), low = "white", high = "red", name ='') +  labs( x = "Ranking", y = "") + theme(axis.text.y = element_text(size = I(12)) )  + theme_bw()
 
-qplot(data=rankings, x=rnk,y=dim,fill=V1,geom='tile', xlab='Ranking', ylab='') +scale_fill_gradient(limits=c(0,26), low="white", high="red",name='') + theme(axis.text.y = element_text(size=I(12)) )  + theme_bw()
+ 
 @
 \caption{Variable importance, color intensity indicates for how many communities a variable appears in each of the first five ranks. For instance, the most important (rank equals to 1) variable is 5.year.ahead for 22 out 26 communities. \label{imp1}}
 \end{figure}
@@ -725,7 +743,14 @@ The variable 5.years.ago represents the perception of the community improvement,
 aux <- soul.red2
 aux$QSB <- with(aux, reorder(QSB, -as.numeric(QSB) ))
 
-prodplot(aux, ~CCEGRP2+Q6A+QSB, divider=c("vspine","hspine",'hspine'),subset=level == 2)+aes(fill=CCEGRP2) + facet_wrap( facet=~QSB, scale='free',ncol=7) + theme( legend.title=element_blank(),axis.text.x=element_blank(),axis.text.y=element_blank(),  axis.title.y=element_blank(),axis.title.x=element_blank(),legend.position=c(.9,0.1) ) + scale_fill_brewer(type='seq', palette=1)
+prodplot(aux, ~CCEGRP2 + Q6A + QSB, divider = c("vspine","hspine",'hspine'), subset = level == 2) + aes(fill = CCEGRP2) +
+  facet_wrap( facet =~ QSB, scale = 'free', ncol = 7) +
+  theme( legend.title = element_blank(),
+         axis.text.x = element_blank(), axis.text.y = element_blank(),  
+         axis.title.y = element_blank(),
+         axis.title.x = element_blank(),
+         legend.position = c(.9, 0.1) ) +
+  scale_fill_brewer(type = 'seq', palette = 1)
 @
 \caption{Product plot of attachment against forward looking variable (5.year.ahead) by community. \label{fowardplot}}
 \end{figure}
@@ -740,8 +765,17 @@ aux <- subset(important, dim2 %in% levels(dim2)[1:10])
 
 aux$dim2 <- recode(aux$dim2,"'Q15AB'='Lead.Int';'Q9'='Economy';'Q8A'='Talented';'Q7M'='Care';'Q7K'='Health';'Q7G'='Colleges';'Q7F'='Schools';'Q7B'='Beauty';'Q6A'='5year.ahead';'Q6'='5year.ago'")
 
+a <- aux %>% select(QSB,dim2, rmdg) %>% spread(dim2,rmdg) %>% 
+  select(-QSB) %>% cor() 
 
-qplot(data=aux, x=dim2,y=QSB,fill=rmdg,geom='tile')+ theme(axis.text.x = element_text(angle=90, size=I(12)), axis.title.x=element_blank() )  +scale_fill_gradient(low="white", high="red") +theme(legend.position = 'none')
+cl <- abs(1-a) %>%  as.dist() %>% hclust( method = 'ward.D')
+
+
+
+ggplot(data = aux, aes(x = fct_relevel(dim2, cl$labels[cl$order]), y = QSB, fill = rmdg )) +
+  geom_tile() +
+  theme(axis.text.x = element_text(angle = 90, size = I(12)), axis.title.x = element_blank() )  + scale_fill_gradient(low = "white", high = "red") + theme(legend.position = 'none')
+
 @
 \caption{Illustration of the differences in important variables by community \label{imp.st}. For each variable, red intensity represent the variable relative importance, i.e. in which community that variable is more important than the average. White indicates variables below importance average.}
 \end{figure}
