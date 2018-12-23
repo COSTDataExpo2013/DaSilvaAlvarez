@@ -70,6 +70,7 @@ library(randomForest)
 library(survey)
 library(fpc)
 library(reldist) 
+library(ggdendro)
 
 # write report
 library(xtable)
@@ -391,31 +392,28 @@ Different colors identify different groups based on income and Gini. The colored
 
 \begin{figure}[hbpt]
 <<cluster.cen, dependson=c('data','corplot'), echo=FALSE,message=FALSE,warning=FALSE>>=
-# var.cl2 <- colnames(census.data) %in% c("aveageF","prop1821", "Bachelor.s.degree.or.higher." , "gini" , "own.rate" , "afri.prop",'prop.new.entry','un.rate',"prop.no.workers" )
-d2 <- census.data %>% select(aveageF, prop1821, Bachelor.s.degree.or.higher., gini , own.rate , afri.prop, prop.new.entry, un.rate, prop.no.workers ) %>% dist()
 
-# d2 <- dist(census.data[, var.cl2])
+d2 <- census.data %>% 
+  select(aveageF, prop1821, Bachelor.s.degree.or.higher., gini , own.rate , afri.prop, prop.new.entry, un.rate, prop.no.workers ) %>%
+  dist()
+
 hc2 <- hclust(d2, method = 'ward.D')
-# census.data$cl.2 <- cutree(hc2, 4)
-
-# Characterize the clusters with the numerical variables
-nn <- c('cl.2', 'Age.Fem', '1821.Yr','Bachelor', 'Unemp','Gini','Own.rate', 'Afri.pr', 'No.workers', 'New.entry' )
 
 census.data %>%
-  mutate(cl.2 = cutree(hc2, 4) ) %>% 
-  select( c(colnames(census.data)[var.cl2],'cl.2' ) ) %>% 
+   mutate(cl.2 = cutree(hc2, 4) ) %>%
+     select(aveageF, prop1821, un.rate, Bachelor.s.degree.or.higher., gini , own.rate ,  prop.new.entry, afri.prop, prop.no.workers, cl.2) %>% 
   group_by(cl.2) %>%
   summarise_all(funs(mean)) %>%
-  setNames(nn) %>% ungroup() %>%
-  mutate(cl.2 = factor(cl.2)) %>% 
-  ggparcoord(columns = 2:10, scale = 'std', 
+  ungroup() %>%
+  rename(Age.Fem = aveageF, Yr.1821 = prop1821, Unemp = un.rate, Bachelor = Bachelor.s.degree.or.higher., Gini = gini, Own.rate = own.rate, New.entry = prop.new.entry, Afri.pr= afri.prop, No.workers = prop.no.workers, cl.2 = cl.2) %>% 
+  mutate(cl.2 = factor(cl.2)) %>%
+  ggparcoord(columns = 2:10, scale = 'std',
              groupColumn = 'cl.2', showPoints = T, 
-             order = c(4, 10, 2, 7, 8, 6, 3,5, 9))  + 
+             order = c(3, 5, 6, 8, 2, 4, 10, 7, 9))  + 
   theme(axis.text.x = element_text(angle = 90, size = I(15))) + 
   labs(x = '', y = '') + 
   scale_color_brewer(type = 'qual', palette = 2, name = 'Group')
   
-  # c(3, 4, 6, 10, 2, 5, 9, 7, 8)
 @
 \caption{Parallel coordinate plot for community cluster means. \label{cluster.cen} }
 \end{figure}
@@ -455,7 +453,7 @@ It can be observed that most of the small communities have larger indices of att
 Figure \ref{corplot} shows the correlation among every variable and the proportion of people attached and not attached per community. It is constructed combining the attachment index in the Knight survey data with the community descriptive variables from Census Bureau. At the community level, proportion of houses with two people, proportion of males, and proportion of people moved into a community within last five years are positively associated with attached, showing correlations between .25 and .35. Interestingly, negative correlations are larger in absolute value, the average years living in the same place (renting or owning) and size of the community are the most negatively correlated variables with attached.
 
 \begin{figure}[hbpt]
-<<corplot, echo=FALSE, dependson=c('data'),cache=TRUE>>=
+<<corplot, echo=FALSE, dependson=c('data'),cache=TRUE, warning = FALSE>>=
 # With Census data we want to describe communities
 
 cors <- census.data %>% 
@@ -513,17 +511,17 @@ Figure \ref{para} is a parallel coordinate plot of the cluster means. The first 
 
 \begin{figure}[hbpt]
 <<cluster.plot1, dependson='cluster',echo=FALSE,message=FALSE,warning=FALSE,warning=FALSE,fig.height=6.5>>=
-lab <- c('Family','Refer','Perfect','Children','Leader','Proud', 'Lead. Int.','Talented','Job','Meet.People','
-         5year.ahead', 'School','Reputation','5year.ago', 'Care', 'Senior','Economy','Satisfaction','Health',
-         'Find.Job', 'Parks','Beauty','Roads','Housing','Night.Life', 'Minorities', 'Inmigrants', 'Gay', 'Safe','Colleges', 'Friends')
 
-aux2 <- subset(des.cl1, variable %in% levels(des.cl1$variable)[1:31])
-aux2$variable <- factor(aux2$variable)
-aux2$var2 <- as.integer(aux2$variable)
-colnames(aux2)[1] <- 'Clusters'
+des.cl1 %>% 
+  spread(vars,value) %>% 
+  select(Q25, QCE2, Q7E, Q3B, Q8D, Q8A, Q15AA, Q7L, Q9, Q3A, Q15AB, Q6A, Q3C, Q6, Q7I, Q7F, Q7K, Q8F, Q7M, Q7D, QCE1, Q7A, Q7B, Q7C, Q8C, Q8E, Q8B, Q7H, Q18, Q7G, Q24,YEAR,cl.id) %>% 
+  rename( Family = Q25, Refer = QCE2, Perfect = Q7E, Children = Q3B, Leader = Q8D, Proud = Q8A, Lead.Int. = Q15AA, Talented = Q7L, Job = Q9, Meet.People = Q3A, `5year.ahead` = Q15AB, School = Q6A, Reputation = Q3C, `5year.ago` = Q6, Care = Q7I, Senior = Q7F, Economy = Q7K, Satisfaction = Q8F, Health = Q7M, Find.Job = Q7D, Parks = QCE1, 
+Beauty = Q7A, Roads = Q7B, Housing = Q7C, Night.Life = Q8C, Minorities = Q8E, Inmigrants = Q8B, Gay = Q7H, Safe = Q18, Colleges = Q7G, Friends = Q24, Clusters = cl.id) %>% 
+ gather(vars, value, -Clusters,-YEAR) %>% 
+  ggplot(aes(x = vars, y = value, color = Clusters, shape = Clusters), size = I(3)) + labs(x = "", y = "") +  geom_point(size = I(2))  + geom_line(aes(group = Clusters)) + 
+  facet_wrap(~YEAR, nrow = 3) + theme(axis.text.x = element_text(angle = 90, size = I(15)), legend.position = 'bottom' ) + scale_color_brewer(type='qual', palette='Paired')
 
-#,main='Mean Value Selected Variables Used in the K-means Cluster'
-qplot(data = aux2, var2, value, color = Clusters,shape = Clusters,xlab = '', ylab = '',size = I(3)) +geom_line(size = I(.5)) + facet_wrap(~YEAR,nrow = 3) + theme(axis.text.x = element_text(angle = 90, size = I(15)), legend.position = 'bottom' ) + scale_x_discrete(breaks = 1:31, labels = lab) + scale_color_brewer(type='qual', palette='Paired')
+
 @
 \caption{Cluster mean points. Mean values for all the variables used to create the clusters in every year. \label{para}}
 \end{figure}
@@ -535,10 +533,9 @@ The only differences among means for clusters 3 and 4 are family and friends ind
 
 \begin{figure}[hbpt]
 <<cluster.plot2, dependson='data',echo=FALSE, fig.height=4,message=FALSE,warning=FALSE,warning=FALSE,fig.height=6.5>>=
-ind <- colnames(soul.red2) == 'cl.id'
-colnames(soul.red2)[ind] <- 'Cluster.ID'
 
-prodplot(soul.red2, PROJWT ~ CCEGRP2+ Cluster.ID + YEAR, divider=c("vspine", "hspine",'vspine'), subset = level == 2)+aes(fill = CCEGRP2) + theme(legend.position = 'bottom', legend.title = element_blank(),axis.title.y=element_blank()) + scale_fill_brewer(type='seq', palette=1)
+soul.red2 %>%  rename(Cluster.ID = cl.id ) %>% 
+prodplot(PROJWT ~ CCEGRP2 + Cluster.ID + YEAR, divider = c("vspine", "hspine",'vspine'), subset = level == 2) + aes(fill = CCEGRP2) + theme(legend.position = 'bottom', legend.title = element_blank(),axis.title.y = element_blank()) + scale_fill_brewer(type='seq', palette = 1)
 
 @
 \caption{Relation between community attachment and k-means cluster solution. Cluster 1 shows the higest attachment proportion while cluster 2 the lowest. Attachment distribution is stable within each grupo amont years. \label{clus1}}
@@ -559,29 +556,36 @@ The proportion of lifetime lived in the community and its mean value for each co
 <<life, dependson='data', echo=FALSE,fig.height=4,message=FALSE,warning=FALSE>>=
 
 ### VARIFICAR NOMBRES REPETIDOS EN SVYVAR !!!!!!!
-life <- svyby(~prop.res+QD1+CCE, ~QSB, des.wt, svymean, keep.var=TRUE, na.rm=T)
-lifevar <- svyby(~prop.res+CCE, ~QSB, des.wt, svyvar, keep.var=TRUE, na.rm=T)
+life <- svyby(~prop.res + QD1 + CCE, ~QSB, des.wt, svymean, keep.var = TRUE, na.rm = T)
+lifevar <- svyby(~prop.res + CCE, ~QSB, des.wt, svyvar, keep.var = TRUE, na.rm = T)
 lifevar$rho <- with(lifevar, V2/sqrt(V1*V4))
 
-qplot(data=life, x=prop.res, y=QSB, size=I(4), ylab='',xlab='Proportion of lifetime living in the community')+theme(axis.text.y = element_text( size=I(10)))
+ggplot(data = life, aes(x = prop.res, y = QSB), size = I(4)) + geom_point() +
+labs(y = '', x ='Proportion of lifetime living in the community') + 
+  theme(axis.text.y = element_text( size=I(10)))
 @
 \caption{Dot chart of communities sorted from top to bottom by attachment against the mean proportion of lifetime spent in the current community (stay). Communities where most of people are living longer are the less attached ones. \label{stay}}
 \end{figure}
 
-<<life.tab, dependson=c('corplot','life'),echo=FALSE, results='asis', cache=FALSE>>=
-aux1 <- subset(dat.cor, vars %in% c("prop.new.entry","av.rent","av.own" ) & type=='Attached')[,1:2]
-
+<<life.tab, dependson=c('corplot','life'),echo=FALSE, results='asis', cache=FALSE, warning=FALSE>>=
+# check correlation for prop.new.entry, should be 0.13
 rho <- with(life, round(cor(CCE, prop.res),2) )
 
-aux2   <- data.frame(vars='stay', cor=rho)
-aux3 <- rbind(aux1,aux2)
-description <-c('Average years renting in current home', 'Average years owning the current home',
-              'Prop. of people not borned in the community', 'Proportion of age in current comunity')
-data.source <- c(rep('Census Bureau', 3), 'Knight-Gallup data')
-tab <- data.frame(Data=data.source,Description=description,Correlation=aux3$cor)
-row.names(tab) <- NULL
-tab <- xtable(tab, caption='Correlation with attachment', label='lifetab')
-print(tab, caption.placement='top')
+cors %>%  
+  filter(vars %in% c("Prop.new.entry", "Average.years.rent.in.community", "Aver.years.own.in.community") &  type =='Attached' ) %>% 
+  select(vars, vv) %>% rename(cor = vv) %>%
+  bind_rows(data.frame(vars = 'stay', cor = rho)) %>% 
+  mutate(Data =  c(rep('Census Bureau', 3), 'Knight-Gallup data'), 
+         Description = c( 'Average years owning the current home', 
+                          'Average years renting in current home', 
+                          'Prop. of people not borned in the community', 
+                          'Proportion of age in current comunity')) %>% 
+  rename(Correlation = cor) %>% 
+  select(Data, Description, Correlation) %>% 
+  xtable( caption='Correlation with attachment', label='lifetab') %>% 
+  print( caption.placement = 'top', include.rownames = FALSE)
+
+
 @
 
 This relationship is explored in more depth using the attachment index instead of the attach group variable. The correlation between attachment index and all these 3 variables are presented in Table \ref{lifetab}. The correlation between attachment index and average proportion of people living in a community is $ \rho = \Sexpr{rho}$, which is in the same direction suggested by Figure \ref{stay}. From  the \cite{acs2011}  data, the average years for current home owners and renters and the proportion of people who were not born in the community was computed.  The proportion of people attached to a community is negatively correlated with the average years in the same house (as renter or owner) and positively related to the proportion people that are new in the community.
@@ -591,31 +595,38 @@ The study of the relationship between attachment and how long people stay in the
 Table \ref{move} shows that among the attached people 19\% would like to move if they had the chance to do it and this proportion increases to 70\% among not attached people. On the other hand, 29\% of the not attached people would like to stay in the same neighborhood while among attached people this proportion reaches 80\%. This suggests a positive association among the attached group and a longer stay in one community.
 
 <<moving, dependson='data', echo=FALSE,results='asis', cache=FALSE>>=
-levels(soul$Q5)[1:2] <- 'Non Response'
-levels(soul$Q5)[2:6] <- 'Move from your neighborhood'
-soul$Q5 <- factor(soul$Q5)
-
-pr <- with(subset(soul, !is.na(PROJWT) ), PROJWT/3)
-des.pro <- svydesign(ids=~1, strata=~QSB, weights=~pr, data=subset(soul, !is.na(PROJWT) ) )
-
-tab <- svyby(~Q5,~CCEGRP2, des.pro, svymean,keep.var=FALSE, na.rm=T)
-tab <- round(100*ftable(tab), 2)
-
-dt <- data.frame(matrix(tab[1:9], ncol=3))
-rownames(dt) <- levels(soul$Q5)
-colnames(dt) <- levels(soul$CCEGRP2)
-dt <- xtable(dt, caption='Willingness to move outside your neighborhood', label='move')
-print(dt, caption.placement='top')
+soul %>% 
+  mutate(Q5 = recode_factor(Q5, "(DK)" = "Non Response", 
+    "(Refused)" = "Non Response",
+    "Move outside of (answer from Sc) but stay in the state" = "Move from your neighborhood",
+    "Move outside of this communitybut stay in the state" = "Move from your neighborhood",
+    "Move to another city and state altogether" = "Move from your neighborhood",
+    "Move to another neighborhood in (answer from Sc)" = "Move from your neighborhood", 
+    "Move to another neighborhood in this community" = "Move from your neighborhood")) %>%  
+  filter(!is.na(PROJWT)) %>% 
+  mutate(pr = PROJWT/3)  %>% 
+  svydesign(ids =~1, strata =~QSB, weights =~pr, data = .) %>% 
+  svyby(~Q5,~CCEGRP2, design = ., svymean,keep.var = FALSE, na.rm = T) %>% 
+  ftable() %>% data.frame() %>% 
+  mutate( Var2 = gsub('statistic.Q5', '', Var2) ) %>% 
+  spread(CCEGRP2, Freq) %>%  
+  xtable(caption = 'Willingness to move outside your neighborhood', label = 'move') %>% 
+  print(caption.placement = 'top')
 
 @
 Figure \ref{wrho} shows the correlation among attachment index and proportion of lifetime spent in the community at the individual level for each community. There is not a clear pattern in the correlation and in any case the values are close to the correlation observed at a the community level. None of the  correlations are larger than 0.2 in absolute value and for most communities there is a positive correlation between attached and proportion of lifetime lived in the community.
 
 \begin{figure}
 <<life_seq, dependson=c('life'), echo=FALSE,fig.height=4,message=FALSE,warning=FALSE>>=
-life$QSB <- with(life, factor(QSB, levels = rev(levels(QSB))))
+life %<>% life %>%
+  mutate(QSB = factor(QSB, levels = rev(levels(QSB)))) 
 
 lifevar %>% data.frame() %>%  select(-starts_with('se')) %>%
-  qplot(data=., x=QSB,ymax=rho,ymin=0, xlab='',geom='linerange', ylab='Correlation',size=I(2))  + theme(axis.text.y = element_text( size=I(10) ),axis.text.x = element_text(size=I(10), angle=90),axis.title.x = element_text(size=I(25)))
+  ggplot(aes(x = QSB, ymax = rho, ymin = 0)) +
+  geom_linerange(size = I(2)) +
+  labs(x = '',  y = "Correlation") +
+  theme(axis.text.y = element_text( size = I(10) ), axis.text.x = element_text(size = I(10), angle = 90), axis.title.x = element_text(size = I(25)))
+  
 @
 \caption{ Bar chart of correlations between attachment and lifetime living in the community within each community (ordered by attachment level). Only few communities shows negative correlation between attachment and lifetime living there. \label{wrho}}
 \end{figure}
@@ -636,15 +647,22 @@ However, the years in which the survey took place were particularly bad years fo
 The bottom panel of Figure \ref{eco} presents the U.S. GDP growth rate in 2008, 2009, and 2010. A similar pattern is observed in both panels, suggesting the economic dimension is less related with attachment during the economic crisis.
 \begin{figure}[hbpt]
 <<econ, dependson=c('data'), echo=FALSE,message=FALSE,warning=FALSE, fig.height=4>>=
-wt <- with(subset(soul,!is.na(PROJWT)), PROJWT)
-des.wt <- svydesign(ids=~1, strata=~QSB, weights=~wt, data=subset(soul,!is.na(PROJWT)))
-vars  <- svyby(~ECONOMY+CCE, ~YEAR, des.wt, svyvar, keep.var=TRUE, na.rm=T)
-vars <- mutate(vars[, 1:5], rho = with(vars, V2/sqrt(V1*V4)),gdp = c(-0.4,-3.5,3.0))
 
-rhos.m <- melt(vars, id.vars='YEAR',measure.vars=c('rho','gdp' ) )
-levels(rhos.m$variable) <- c('Attachment-Economy correlation', 'GDP Rate')
+des.wt.year <- svydesign(ids =~ 1, strata =~ QSB, weights =~ PROJWT, data = filter(soul,!is.na(PROJWT)))
+vars  <- svyby( ~ ECONOMY + CCE, ~ YEAR, des.wt.year, svyvar, keep.var = TRUE, na.rm = T)  
+vars <- mutate(vars[, 1:5], rho = with(vars, V2/sqrt(V1*V4)), gdp = c(-0.4,-3.5,3.0))
 
-qplot(data=rhos.m, x=YEAR, y=value,xlab='',ylab='', geom=c('point','line')) +facet_grid(facets=variable~.,scales='free')+ ggtitle('Evolution of Attachment-Economy correlation and GDP')
+rhos.m <- gather(vars, variable, value,rho,gdp) %>% 
+  select(YEAR, variable, value) %>% 
+  mutate(variable =  factor(variable, labels = c('Attachment-Economy correlation', 'GDP Rate')
+))
+
+ggplot(data = rhos.m, aes(x = YEAR, y = value)) + 
+  labs(x = "", y = "", title = 'Evolution of Attachment-Economy correlation and GDP') +
+  geom_line() + geom_point() +
+  facet_grid(facets = variable~., scales = 'free') + 
+  ggtitle('Evolution of Attachment-Economy correlation and GDP')
+  
 @
 \caption{Attachment vs economic dimension. Top panel shows the correlation between attachment and economy index against time. Bottom panel shows the GDP growth rate against years. \label{eco}}
 \end{figure}
@@ -749,21 +767,27 @@ Some variable can be identified as relatively most important for communities wit
 
 \begin{figure}
 <<import.plot4, dependson='data',echo=FALSE, fig.height=5, fig.width=8,message=FALSE,warning=FALSE,warning=FALSE, fig.keep='all'>>=
-library(ggdendro)
-
-xx <- dcast(important[,c('dim','QSB','mdg.pr')], QSB~dim)
-rownames(xx) <- xx$QSB
-d <- dist( xx[,-1] )
-hc <- hclust(d, method='ward')
-xx$comu.cl <- as.numeric(cutree(hc,5))
-
-dd.row <- as.dendrogram(hc)
-ddata_x <- dendro_data(dd.row)
-p2 <- ggplot(segment(ddata_x))+geom_segment(aes(x=x, y=y, xend=xend, yend=yend),extent = "device")
-labs <- label(ddata_x)
 
 
-p2 + geom_text(data=labs, aes(label=label, x=x, y=-1.5))+coord_flip()+scale_y_reverse()+theme(legend.position = 'none',axis.title.x = element_blank(),axis.title.y = element_blank()) + ylim(c(10,-3))
+xx <- important %>% 
+  select(dim, QSB, mdg.pr) %>% 
+  spread(dim, mdg.pr) 
+
+hc <- xx[,-1]  %>% 
+  data.frame() %>% 
+  `rownames<-`(xx$QSB) %>%  
+  dist( ) %>% 
+  hclust( method = 'ward')
+
+xx %<>% mutate(comu.cl = as.numeric(cutree(hc,5))) 
+
+ddata_x <- dendro_data(as.dendrogram(hc))
+
+ggplot(segment(ddata_x)) + 
+  geom_segment(aes(x = x, y = y, xend = xend, yend = yend),extent = "device") +
+  geom_text(data = label(ddata_x), aes(label = label, x = x, y = -1.5)) + 
+  coord_flip() + scale_y_reverse() + 
+  theme(legend.position = 'none',axis.title.x = element_blank(),axis.title.y = element_blank()) + ylim(c(10,-3))
 
 @
 \caption{Dendrogam of communities based on importance measures. Communities close to each other have similar structure of key drivers of attachment. \label{dendro}}
