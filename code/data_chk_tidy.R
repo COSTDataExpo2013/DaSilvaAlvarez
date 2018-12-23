@@ -38,6 +38,9 @@ soul <- soul %>%
   mutate(QSB = reorder(QSB, CCEGRP2Attached)) %>%
   select( -CCEGRP2Attached )
 
+des.wt$variables$QSB <- with(des.wt$variables, fct_relevel(QSB, levels(soul$QSB)))
+
+
 # Reduction of the data set to avoid missing value imputation.
 # select variables with less than 25 % of missing values
 # Main reduction of data: Only variables with less than 25% of missing,

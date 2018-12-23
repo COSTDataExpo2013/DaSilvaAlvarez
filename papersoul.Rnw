@@ -50,8 +50,8 @@ if (before && options$fig.show!= 'none') par(mar = c(4, 4, .1, .1), cex.lab = .9
 # packages
 
 # to be removed...
-library(reshape2)
-library(plyr)
+# library(reshape2)
+# library(plyr)
 
 # data wrangling
 library(magrittr)
@@ -85,8 +85,8 @@ Sys.setenv(TEXINPUTS = getwd(),
 # Procesing data sets from SOCT and Census Bureau
 source('code/data_chk_tidy.R')
 source('code/census_chk_tidy.R')
-# loading results from cluster and random forest models.
 
+# loading results from cluster and random forest models.
 res_cluster <- readRDS('data/res_cluster.rds') %>%
 list2env(globalenv())
 
@@ -95,8 +95,6 @@ list2env(globalenv())
 
 # Compute comunity proportion of attached people
 # community labels differ from soul and census datasets
-
-
 lev <- soul %>% pull(QSB) %>% levels()
 
 census.data %<>%
@@ -113,7 +111,6 @@ rankings <- important %>%
   summarize(V1 = length(dim)) %>%
   ungroup() %>% 
   mutate(rnk = factor(rnk, labels = paste("R", 1:5, sep = "")))
-
 @
 
  
@@ -455,7 +452,6 @@ Figure \ref{corplot} shows the correlation among every variable and the proporti
 \begin{figure}[hbpt]
 <<corplot, echo=FALSE, dependson=c('data'),cache=TRUE, warning = FALSE>>=
 # With Census data we want to describe communities
-
 cors <- census.data %>% 
   gather(vars, vv, -QSB, -CCEGRP2Attached, -`CCEGRP2Not Attached` ) %>%
   group_by(vars) %>% 
@@ -495,8 +491,6 @@ cors %>%
   ggplot() +
   geom_point(aes(y = vars, x = vv, color = positive), size = I(3)) +
   facet_grid(~type) + theme(legend.position = 'bottom', legend.title = element_blank(), axis.text.y = element_text(size = I(15))) + labs(y = "", x = "Correlation")
-
-
 @
 \caption{Correlations with attached and not attached proportion in order from top to bottom based on correlation with attached\label{corplot}. This plot shows the 10 more relevant variables with positive correlation and 10 with negative correlation with attachment.}
 \end{figure}
@@ -584,8 +578,6 @@ cors %>%
   select(Data, Description, Correlation) %>% 
   xtable( caption='Correlation with attachment', label='lifetab') %>% 
   print( caption.placement = 'top', include.rownames = FALSE)
-
-
 @
 
 This relationship is explored in more depth using the attachment index instead of the attach group variable. The correlation between attachment index and all these 3 variables are presented in Table \ref{lifetab}. The correlation between attachment index and average proportion of people living in a community is $ \rho = \Sexpr{rho}$, which is in the same direction suggested by Figure \ref{stay}. From  the \cite{acs2011}  data, the average years for current home owners and renters and the proportion of people who were not born in the community was computed.  The proportion of people attached to a community is negatively correlated with the average years in the same house (as renter or owner) and positively related to the proportion people that are new in the community.
@@ -618,7 +610,7 @@ Figure \ref{wrho} shows the correlation among attachment index and proportion of
 
 \begin{figure}
 <<life_seq, dependson=c('life'), echo=FALSE,fig.height=4,message=FALSE,warning=FALSE>>=
-life %<>% life %>%
+life %<>%
   mutate(QSB = factor(QSB, levels = rev(levels(QSB)))) 
 
 lifevar %>% data.frame() %>%  select(-starts_with('se')) %>%
@@ -777,18 +769,17 @@ hc <- xx[,-1]  %>%
   data.frame() %>% 
   `rownames<-`(xx$QSB) %>%  
   dist( ) %>% 
-  hclust( method = 'ward')
+  hclust( method = 'ward.D')
 
-xx %<>% mutate(comu.cl = as.numeric(cutree(hc,5))) 
+# xx %<>% mutate(comu.cl = as.numeric(cutree(hc,5))) # what is this for ?
+data.dendro <- hc %>% as.dendrogram() %>% dendro_data() 
 
-ddata_x <- dendro_data(as.dendrogram(hc))
-
-ggplot(segment(ddata_x)) + 
+data.dendro %>% segment() %>% 
+  ggplot() + 
   geom_segment(aes(x = x, y = y, xend = xend, yend = yend),extent = "device") +
-  geom_text(data = label(ddata_x), aes(label = label, x = x, y = -1.5)) + 
+  geom_text(data = ggdendro::label(data.dendro), aes(label = label, x = x, y = -1.5)) + 
   coord_flip() + scale_y_reverse() + 
   theme(legend.position = 'none',axis.title.x = element_blank(),axis.title.y = element_blank()) + ylim(c(10,-3))
-
 @
 \caption{Dendrogam of communities based on importance measures. Communities close to each other have similar structure of key drivers of attachment. \label{dendro}}
 \end{figure}
@@ -826,7 +817,7 @@ Professor Di Cook helped with the analysis and reviewing the paper. Xiaoyue Chen
 
 \section{Description of the variables used}
 
-\begin{table}[h]
+\begin{table}[hbpt]
 \centering
 \caption{Variables used in the paper}
 \begin{tabular}{|l|p{10cm}|}\hline
