@@ -276,8 +276,8 @@ lon.lat <- read.table('lon.lat.txt',header=T) %>%
 us <- map_data("state")
 
 ggplot() + 
-  geom_path(data = us, aes(long, lat, group=group), color = 'grey' ) +
-  geom_point(data=lon.lat, aes(x=lon, y=lat, size = pop100), alpha = .5) +
+  geom_path(data = us, aes(long, lat, group = group), color = 'grey' ) +
+  geom_point(data = lon.lat, aes(x = lon, y = lat, size = pop100), alpha = .5) +
   xlab('') + ylab('') + 
   scale_size(range = c(5,20)) + 
   scale_color_brewer(type = 'seq') +
@@ -683,10 +683,11 @@ The Blau index is defined as $D = 1- \sum p_i^2$ where $p_i$ is the proportion o
 # QD10 ask for hispanic or not hispanic, QD111 ask for race, we combine both in QD111
 
 aux <- soul$QD111
+
 levels(aux)[c(4,6:10,15:17,19,20) ] <- 'Other'
 levels(aux)[c(1,2,5,7,8,10) ] <- 'Non Response'
 levels(aux)[2] <- 'Hispanic'
-aux[soul$QD10=='Yes'] <- 'Hispanic'
+aux[soul$QD10 == 'Yes'] <- 'Hispanic'
 soul$race  <- factor(aux)
 
 wt <- with(subset(soul, !is.na(PROJWT) & YEAR!=2010), PROJWT/2 )
@@ -698,7 +699,7 @@ b <- merge(census.data,tab[,c('QSB','diver','statistic.raceWhite') ], by='QSB')
 
 rho.div <- with(tab, round(cor(diver, statistic.CCE),2))
 
-qplot(data=tab, diver,logit(statistic.CCEGRP2Attached),size=I(5)) + theme(axis.text.y = element_text( size=I(10)) ) + ylab('Proportion of Attach (logit scale)') + xlab('Race diversity index') + geom_smooth(se=FALSE, method='lm', size=I(1))
+ggplot(data = tab, aes(x = diver, y = logit(statistic.CCEGRP2Attached))) + geom_point(size = I(5)) + theme(axis.text.y = element_text( size = I(10)) ) + labs( y = 'Proportion of Attach (logit scale)', x = 'Race diversity index') + geom_smooth(se = FALSE, method = 'lm', size = I(1))
 
 @
 \caption{Scatter plot of  attachment proportion by race diversity index. \label{raceplot}}
