@@ -639,21 +639,33 @@ However, the years in which the survey took place were particularly bad years fo
 The bottom panel of Figure \ref{eco} presents the U.S. GDP growth rate in 2008, 2009, and 2010. A similar pattern is observed in both panels, suggesting the economic dimension is less related with attachment during the economic crisis.
 \begin{figure}[hbpt]
 <<econ, dependson=c('data'), echo=FALSE,message=FALSE,warning=FALSE, fig.height=4>>=
-
-des.wt.year <- svydesign(ids =~ 1, strata =~ QSB, weights =~ PROJWT, data = filter(soul,!is.na(PROJWT)))
-vars  <- svyby( ~ ECONOMY + CCE, ~ YEAR, des.wt.year, svyvar, keep.var = TRUE, na.rm = T)  
-vars <- mutate(vars[, 1:5], rho = with(vars, V2/sqrt(V1*V4)), gdp = c(-0.4,-3.5,3.0))
-
-rhos.m <- gather(vars, variable, value,rho,gdp) %>% 
+svydesign(ids =~ 1, strata =~ QSB, weights =~ PROJWT, data = filter(soul,!is.na(PROJWT))) %>% 
+  svyby( ~ ECONOMY + CCE, ~ YEAR, design = ., svyvar, keep.var = TRUE, na.rm = T)  %>% data.frame() %>% select(1:5) %>% 
+  mutate(rho = V2/sqrt(V1*V4), gdp = c(-0.4,-3.5,3.0)) %>% 
+  gather(variable, value,rho,gdp) %>% 
   select(YEAR, variable, value) %>% 
   mutate(variable =  factor(variable, labels = c('Attachment-Economy correlation', 'GDP Rate')
-))
-
-ggplot(data = rhos.m, aes(x = YEAR, y = value)) + 
-  labs(x = "", y = "", title = 'Evolution of Attachment-Economy correlation and GDP') +
+)) %>% ggplot(aes(x = YEAR, y = value)) + 
   geom_line() + geom_point() +
+  labs(x = "", y = "", 
+       title = 'Evolution of Attachment-Economy correlation and GDP') +
   facet_grid(facets = variable~., scales = 'free') + 
   ggtitle('Evolution of Attachment-Economy correlation and GDP')
+
+# des.wt.year <- svydesign(ids =~ 1, strata =~ QSB, weights =~ PROJWT, data = filter(soul,!is.na(PROJWT)))
+# vars  <- svyby( ~ ECONOMY + CCE, ~ YEAR, des.wt.year, svyvar, keep.var = TRUE, na.rm = T)  
+# vars <- mutate(vars[, 1:5], rho = with(vars, V2/sqrt(V1*V4)), gdp = c(-0.4,-3.5,3.0))
+# 
+# rhos.m <- gather(vars, variable, value,rho,gdp) %>% 
+#   select(YEAR, variable, value) %>% 
+#   mutate(variable =  factor(variable, labels = c('Attachment-Economy correlation', 'GDP Rate')
+# ))
+# 
+# ggplot(data = rhos.m, aes(x = YEAR, y = value)) + 
+#   labs(x = "", y = "", title = 'Evolution of Attachment-Economy correlation and GDP') +
+#   geom_line() + geom_point() +
+#   facet_grid(facets = variable~., scales = 'free') + 
+#   ggtitle('Evolution of Attachment-Economy correlation and GDP')
   
 @
 \caption{Attachment vs economic dimension. Top panel shows the correlation between attachment and economy index against time. Bottom panel shows the GDP growth rate against years. \label{eco}}
@@ -669,29 +681,49 @@ The Blau index is defined as $D = 1- \sum p_i^2$ where $p_i$ is the proportion o
 \begin{figure}
 
 <<race, echo=FALSE, dependson=c( 'data' ), message=FALSE, fig.height=4>>=
+
 #relation between attached prop of white people and propo of.afro
 
-
 # QD10 ask for hispanic or not hispanic, QD111 ask for race, we combine both in QD111
-
 aux <- soul$QD111
-
 levels(aux)[c(4,6:10,15:17,19,20) ] <- 'Other'
 levels(aux)[c(1,2,5,7,8,10) ] <- 'Non Response'
 levels(aux)[2] <- 'Hispanic'
 aux[soul$QD10 == 'Yes'] <- 'Hispanic'
 soul$race  <- factor(aux)
 
-wt <- with(subset(soul, !is.na(PROJWT) & YEAR!=2010), PROJWT/2 )
-des.pro <- svydesign(ids=~1, strata=~QSB, weights=~wt, data=subset(soul, !is.na(PROJWT) & YEAR!=2010))
+soul %>% select(race, CCEGRP2, CCE, QSB,PROJWT, YEAR) %>% 
+  filter(!is.na(PROJWT), YEAR!=2010)  %>% 
+  mutate(wt = PROJWT/2) %>% 
+  svydesign(ids=~1, strata=~QSB, weights=~wt, data=.) %>% 
+  svyby(~race+CCEGRP2+CCE,~QSB, design = ., svymean,keep.var=FALSE, na.rm=T) %>%
+  gather(race, prop, contains('race')) %>% 
+  group_by(QSB) %>% 
+  summarise(
+    statistic.CCEGRP2Attached = first(statistic.CCEGRP2Attached),
+    diver  = -sum( prop[prop > 0]*log(prop[prop>0]) )
+  ) %>% 
+  ggplot(aes(x = diver, y = logit(statistic.CCEGRP2Attached))) +
+  geom_point(size = I(5)) + 
+  geom_smooth(se = FALSE, method = 'lm', size = I(1)) +
+  theme(axis.text.y = element_text( size = I(10)) ) + 
+  labs( y = 'Proportion of Attach (logit scale)', x = 'Race diversity index') 
 
-tab <- svyby(~race+CCEGRP2+CCE,~QSB, des.pro, svymean,keep.var=FALSE, na.rm=T)
-tab$diver <- apply(tab[,grep('race',colnames(tab))], 1, function(x) -sum(x[x!=0]*log(x[x!=0])))
-b <- merge(census.data,tab[,c('QSB','diver','statistic.raceWhite') ], by='QSB')
 
-rho.div <- with(tab, round(cor(diver, statistic.CCE),2))
+# b <- merge(census.data,tab[,c('QSB','diver','statistic.raceWhite') ], by='QSB') # why?
+# rho.div <- with(tab, round(cor(diver, statistic.CCE),2)) # what is used for??
 
-ggplot(data = tab, aes(x = diver, y = logit(statistic.CCEGRP2Attached))) + geom_point(size = I(5)) + theme(axis.text.y = element_text( size = I(10)) ) + labs( y = 'Proportion of Attach (logit scale)', x = 'Race diversity index') + geom_smooth(se = FALSE, method = 'lm', size = I(1))
+
+# wt <- with(subset(soul, !is.na(PROJWT) & YEAR!=2010), PROJWT/2 )
+# des.pro <- svydesign(ids=~1, strata=~QSB, weights=~wt, data=subset(soul, !is.na(PROJWT) & YEAR!=2010))
+# 
+# tab <- svyby(~race+CCEGRP2+CCE,~QSB, des.pro, svymean,keep.var=FALSE, na.rm=T)
+# tab$diver <- apply(tab[,grep('race',colnames(tab))], 1, function(x) -sum(x[x!=0]*log(x[x!=0])))
+# b <- merge(census.data,tab[,c('QSB','diver','statistic.raceWhite') ], by='QSB')
+# 
+# rho.div <- with(tab, round(cor(diver, statistic.CCE),2))
+# 
+# ggplot(data = tab, aes(x = diver, y = logit(statistic.CCEGRP2Attached))) + geom_point(size = I(5)) + theme(axis.text.y = element_text( size = I(10)) ) + labs( y = 'Proportion of Attach (logit scale)', x = 'Race diversity index') + geom_smooth(se = FALSE, method = 'lm', size = I(1))
 
 @
 \caption{Scatter plot of  attachment proportion by race diversity index. \label{raceplot}}
