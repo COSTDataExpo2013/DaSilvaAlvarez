@@ -129,9 +129,10 @@ This finding is illustrated in Figure \ref{pp1} with the product plot framework 
          Social.Offering = cut(SOCIAL_O, breaks = quantile(SOCIAL_O, prob = seq(0, 1, .2), na.rm = T), labels = c("Q1","Q2","Q3", "Q4", "Q5")))
 
 
-prodplot(data = soul, PROJWT/3 ~CCEGRP2 + Openess, divider = c("vspine", "hspine"), subset = level == 2) + aes(fill = CCEGRP2) + theme(legend.position = 'none',axis.title.y = element_blank()) + scale_fill_brewer(type = 'seq', palette = 1)
+ prodplot(data = soul, PROJWT/3 ~CCEGRP2 + Openess, divider = c("vspine", "hspine"), subset = level == 2) + aes(fill = CCEGRP2) + theme(legend.position = 'none', axis.title.y = element_blank(), axis.title.x = element_text(size = 15), axis.text.x = element_text(size = 15),  axis.text.y = element_text(size = 15)) + scale_fill_brewer(type = 'seq', palette = 1) 
+ prodplot(data = soul, PROJWT/3 ~ CCEGRP2 + Social.Offering , divider = c("vspine", "hspine"), subset = level == 2) + aes(fill = CCEGRP2) + theme( axis.text.y = element_blank(), axis.title.y = element_blank(), axis.title.x = element_text(size = 15), axis.text.x = element_text(size = 15), legend.text = element_text(size = 15), legend.title = element_text(size = 15)) + scale_fill_brewer(type = 'seq', palette = 1, name = 'Attach level') + labs(x = "Social Offering")
 
-prodplot(data = soul, PROJWT/3 ~ CCEGRP2 + Social.Offering , divider = c("vspine", "hspine"), subset = level == 2) + aes(fill = CCEGRP2) + theme(axis.text.y = element_blank(),axis.title.y = element_blank()) + scale_fill_brewer(type = 'seq', palette = 1, name = 'Attach level')
+
 
 @
   \caption{Product plots showing attachment distribution, in the left panel within levels of openness and in right panel within levels of social offering. Openness and Social Offering are binned to make them discrete using quantiles. This plot shows a strong positive association for both openness and social offering and the emotional attachment.\label{pp1}}
@@ -162,13 +163,13 @@ Two sources of information are used, data provided by the Knight Foundation and 
 
 Data from ACS are comunity variable, computed using sampling weights by Census Bureau. 
 When using data from Knight Foundation surveys, the sampling weights need to be taken into
-account, if thte data comes from only one year then the sampling weight is provided
+account, if the data comes from only one year then the sampling weight is provided
 in the data, when all three year survey data are used, sampling weights are divided by three 
 so the total aggregate of each variable still can be consider an estimate of the comunity
 total.
 
 \subsection{Data description}
-The main data set used in this paper was provided by the Knight Foundation, consisting of collected data from 47821 people over three years (2008, 2009 and 2010) in 26 communities across the United States. The data is available at http://streaming.stat.iastate.edu/dataexpo/2013/ as part of the 2013 Data Expo competition (see \cite{soul} for additional details).
+The main data set used in this paper was provided by the Knight Foundation, consisting of collected data from 47821 people over three years (2008, 2009 and 2010) in 26 communities across the United States. The data is available at http://streaming.stat.iastate.edu/dataexpo/2013/ as part of the 2013 Data Expo competition of the American Statistical Association. Additional details on the 2013 Data Expo can be found in \cite{soul2}.
 
 Additionally, community level information from the \cite{acs2011} and seven tables of the 2007-2011 American Community Survey 5-Year estimates were obtained to provide a socio-demographic description of each community.
 
@@ -338,14 +339,17 @@ ggplot(data = age_fig, aes( x = age, y = prop, colour = Gender, shape = Gender))
 \begin{figure}
 <<education,echo=FALSE, dependson='data'>>=
 dat.aux <- census.data %>%
-  select(QSB, Less.than.high.school.graduate.,High.school.graduate.,Some.college.or.associate.s.degree.,Bachelor.s.degree.or.higher.) %>% arrange(Bachelor.s.degree.or.higher.) %>%
+  select(QSB, Less.than.high.school.graduate., High.school.graduate., Some.college.or.associate.s.degree., Bachelor.s.degree.or.higher.) %>% arrange(Bachelor.s.degree.or.higher.) %>%
   mutate(QSB = reorder(QSB, Bachelor.s.degree.or.higher.)) %>%
-  gather(variable, value, -QSB)
+  gather(variable, value, -QSB) %>% 
+  mutate( variable = recode_factor(
+      variable,
+      "Less.than.high.school.graduate." = "Less High School",
+      "High.school.graduate." = "High School",
+      "Some.college.or.associate.s.degree." = "Some College",
+      "Bachelor.s.degree.or.higher." = "Bachelor or higher"), Education.Level = variable) 
 
-levels(dat.aux$variable) <- c('Less High School', 'High School', 'Some College', 'Bachelor or higher')
-colnames(dat.aux)[2] <- 'Education.Level'
-
-prodplot(data = dat.aux, value~Education.Level + QSB, divider = c( "hspine","vspine")) + aes(fill = Education.Level) + theme(legend.position = "bottom", legend.title = element_blank(), axis.title.y = element_blank(), axis.text.y = element_text( size = I(10)) ) + scale_fill_brewer(type = 'seq', palette = 2)
+prodplot(data = dat.aux, value~Education.Level + QSB, divider = c( "hspine","vspine")) + aes(fill = Education.Level) + theme(legend.position = "bottom", legend.title = element_blank(), axis.title.y = element_blank(), axis.text.y = element_text( size = I(10)) ) + scale_fill_brewer(type = 'seq', palette = 2) + labs(x = "Education Level")
 @
 \caption{Product plot of education level by community, the width of each box represent the proportion of people with that education level within a community.  Communities are sorted from top to bottom by proportion of people with college degree. Big range of variation on education level among the communities. \label{edu}}
 \end{figure}
@@ -370,15 +374,17 @@ ggplot(census.data, aes(gini, income.pc)) +
   geom_point(size = I(4)) + 
   geom_text(data = aux, aes(gini,income.pc, label = QSB, color = gr, hjust = h1, vjust = v1), size = I(6)) + 
   labs(y = 'Income per capita', x ='Gini') +
-  theme(legend.position = "none")
+  theme(legend.position = "none", axis.title = element_text(size = 20),
+        axis.text =  element_text(size =  20))
 
 ggplot(census.data, aes(Bachelor.s.degree.or.higher., income.pc)) + 
   geom_point(size = I(4)) +  
   geom_text(data = aux, aes(Bachelor.s.degree.or.higher.,income.pc, label = QSB, color = gr, hjust = h2, vjust = v2), size = I(5))  + 
   labs(y = 'Income per capita', x = 'Bachelor Degree') + 
-  theme(legend.position = "none")
+  theme(legend.position = "none", axis.title = element_text(size = 20),
+        axis.text =  element_text(size =  20))
 @
-\caption{Scatter plot of income per capita by Gini index (left) and scatter-plot of income per capita by proportion of people with bachelor degree (right). Colors identify some groups based on income and Gini. \label{ecolink}}
+\caption{Scatter plot of income per capita by Gini index (left) and scatter plot of income per capita by proportion of people with bachelor degree (right). Colors identify groups based on income and Gini. \label{ecolink}}
 \end{figure}
 
 There exist several measures of income inequality but Gini is the most commonly used in applied studies \citep{atkinson2000handbook}. For this reason the income distribution for each community is summarized using the Gini index. Gini index takes values between 0 and 1, where 0 represents a situation in which every person has the same income level (complete equality) and 1 implies a total income concentration (complete inequality).
@@ -415,7 +421,7 @@ census.data %>%
 \caption{Parallel coordinate plot for community cluster means. \label{cluster.cen} }
 \end{figure}
 
-As a final step in the socio-demographic characterization of the communities, cluster analysis on community characteristics was performed. For this analysis nine variables from the Census Bureau data are used: proportion of people between 18 and 21 years old (1821.yr), proportion of people with a bachelor degree (bachelor), the Gini inequality index (Gini), proportion of people who moved to the community after the year 2000 (new.entry), the average age of the female population (age.fem), the unemployment rate (unemp), no workers rate (no.worker), home owner rate (own.rate) and the proportion of African-Americans (afr.pr).
+As a final step in the socio-demographic characterization of the communities, cluster analysis on community characteristics was performed. For this analysis nine variables from the Census Bureau data are used: proportion of people between 18 and 21 years old (Yr.1821), proportion of people with a bachelor degree (Bachelor), the Gini inequality index (Gini), proportion of people who moved to the community after the year 2000 (New.entry), the average age of the female population (Age.Fem), the unemployment rate (Unemp), no workers rate (No.workers), home owner rate (Own.rate) and the proportion of African-Americans (Afr.pr).
 
 A parallel coordinate plot \citep{inselberg1985plane} is used to compare the cluster means for the variables used in the analysis. Figure \ref{cluster.cen} shows the variables used in the horizontal axis and the variable mean of each cluster on the vertical axis. Group 1 are communities with older people, low education level and biggest home owner rate. Group 2 is formed by communities with large proportion of African-Americans and unequal income distribution. Bradenton and Palm Beach (entire group 3) are communities with older people, not working and not African-American. Group 4 is formed by four communities: Charlotte, Grand Forks, Long Beach and State College, all relatively younger people, with high education levels and non equitable income distribution.
 
@@ -653,18 +659,18 @@ svydesign(ids =~ 1, strata =~ QSB, weights =~ PROJWT, data = filter(soul,!is.na(
   ggtitle('Evolution of Attachment-Economy correlation and GDP')
 
 # des.wt.year <- svydesign(ids =~ 1, strata =~ QSB, weights =~ PROJWT, data = filter(soul,!is.na(PROJWT)))
-# vars  <- svyby( ~ ECONOMY + CCE, ~ YEAR, des.wt.year, svyvar, keep.var = TRUE, na.rm = T)  
+# vars  <- svyby( ~ ECONOMY + CCE, ~ YEAR, des.wt.year, svyvar, keep.var = TRUE, na.rm = T)
 # vars <- mutate(vars[, 1:5], rho = with(vars, V2/sqrt(V1*V4)), gdp = c(-0.4,-3.5,3.0))
 # 
-# rhos.m <- gather(vars, variable, value,rho,gdp) %>% 
-#   select(YEAR, variable, value) %>% 
+# rhos.m <- gather(vars, variable, value,rho,gdp) %>%
+#   select(YEAR, variable, value) %>%
 #   mutate(variable =  factor(variable, labels = c('Attachment-Economy correlation', 'GDP Rate')
 # ))
 # 
-# ggplot(data = rhos.m, aes(x = YEAR, y = value)) + 
+# ggplot(data = rhos.m, aes(x = YEAR, y = value)) +
 #   labs(x = "", y = "", title = 'Evolution of Attachment-Economy correlation and GDP') +
 #   geom_line() + geom_point() +
-#   facet_grid(facets = variable~., scales = 'free') + 
+#   facet_grid(facets = variable~., scales = 'free') +
 #   ggtitle('Evolution of Attachment-Economy correlation and GDP')
   
 @
