@@ -610,7 +610,7 @@ soul %>%
   mutate( Var2 = gsub('statistic.Q5', '', Var2) ) %>% 
   spread(CCEGRP2, Freq) %>%  
   xtable(caption = 'Willingness to move outside your neighborhood', label = 'move') %>% 
-  print(caption.placement = 'top')
+  print(caption.placement = 'top', include.rownames=FALSE)
 
 @
 Figure \ref{wrho} shows the correlation among attachment index and proportion of lifetime spent in the community at the individual level for each community. There is not a clear pattern in the correlation and in any case the values are close to the correlation observed at a the community level. None of the  correlations are larger than 0.2 in absolute value and for most communities there is a positive correlation between attached and proportion of lifetime lived in the community.
@@ -645,38 +645,23 @@ However, the years in which the survey took place were particularly bad years fo
 
 The bottom panel of Figure \ref{eco} presents the U.S. GDP growth rate in 2008, 2009, and 2010. A similar pattern is observed in both panels, suggesting the economic dimension is less related with attachment during the economic crisis.
 \begin{figure}[hbpt]
-<<econ, dependson=c('data'), echo=FALSE,message=FALSE,warning=FALSE, fig.height=4>>=
+<<econ, dependson=c('data'), echo=FALSE,message=FALSE,warning=FALSE, fig.height=5>>=
 svydesign(ids =~ 1, strata =~ QSB, weights =~ PROJWT, data = filter(soul,!is.na(PROJWT))) %>% 
   svyby( ~ ECONOMY + CCE, ~ YEAR, design = ., svyvar, keep.var = TRUE, na.rm = T)  %>% data.frame() %>% select(1:5) %>% 
   mutate(rho = V2/sqrt(V1*V4), gdp = c(-0.4,-3.5,3.0)) %>% 
   gather(variable, value,rho,gdp) %>% 
   select(YEAR, variable, value) %>% 
-  mutate(variable =  factor(variable, labels = c('Attachment-Economy correlation', 'GDP Rate')
-)) %>% ggplot(aes(x = YEAR, y = value)) + 
+  mutate(variable =  factor(variable, labels = c('GDP Rate','Attachment-Economy correlation'))) %>% ggplot(aes(x = YEAR, y = value)) + 
   geom_line() + geom_point() +
   labs(x = "", y = "", 
        title = 'Evolution of Attachment-Economy correlation and GDP') +
   facet_grid(facets = variable~., scales = 'free') + 
   ggtitle('Evolution of Attachment-Economy correlation and GDP')
 
-# des.wt.year <- svydesign(ids =~ 1, strata =~ QSB, weights =~ PROJWT, data = filter(soul,!is.na(PROJWT)))
-# vars  <- svyby( ~ ECONOMY + CCE, ~ YEAR, des.wt.year, svyvar, keep.var = TRUE, na.rm = T)
-# vars <- mutate(vars[, 1:5], rho = with(vars, V2/sqrt(V1*V4)), gdp = c(-0.4,-3.5,3.0))
-# 
-# rhos.m <- gather(vars, variable, value,rho,gdp) %>%
-#   select(YEAR, variable, value) %>%
-#   mutate(variable =  factor(variable, labels = c('Attachment-Economy correlation', 'GDP Rate')
-# ))
-# 
-# ggplot(data = rhos.m, aes(x = YEAR, y = value)) +
-#   labs(x = "", y = "", title = 'Evolution of Attachment-Economy correlation and GDP') +
-#   geom_line() + geom_point() +
-#   facet_grid(facets = variable~., scales = 'free') +
-#   ggtitle('Evolution of Attachment-Economy correlation and GDP')
-  
 @
 \caption{Attachment vs economic dimension. Top panel shows the correlation between attachment and economy index against time. Bottom panel shows the GDP growth rate against years. \label{eco}}
 \end{figure}
+\newpage
 
 \textbf{\emph{Race diversity index.}}
 
