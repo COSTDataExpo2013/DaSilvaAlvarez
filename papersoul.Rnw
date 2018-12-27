@@ -465,7 +465,8 @@ cors <- census.data %>%
     cor.att = cor(vv, CCEGRP2Attached, use = 'complete.obs'),
     cor.noatt = cor(vv, `CCEGRP2Not Attached`, use = 'complete.obs') ) %>% 
   filter(!is.na(cor.att), vars != 'unemployed') %>% 
-  filter(rank(cor.att) %in% c(1:10, 52:61) ) %>% 
+  #mutate(rr = rank(cor.att) ) %>% arrange(rr)
+  filter(rank(cor.att) %in% c(1:10, 54:63) ) %>% 
   mutate(vars =  fct_reorder(vars, cor.att) , vars = recode_factor(
       vars, 
       "av.own" = 'Aver.years.own.in.community',
@@ -518,8 +519,8 @@ des.cl1 %>%
   rename( Family = Q25, Refer = QCE2, Perfect = Q7E, Children = Q3B, Leader = Q8D, Proud = Q8A, Lead.Int. = Q15AA, Talented = Q7L, Job = Q9, Meet.People = Q3A, `5year.ahead` = Q15AB, School = Q6A, Reputation = Q3C, `5year.ago` = Q6, Care = Q7I, Senior = Q7F, Economy = Q7K, Satisfaction = Q8F, Health = Q7M, Find.Job = Q7D, Parks = QCE1, 
 Beauty = Q7A, Roads = Q7B, Housing = Q7C, Night.Life = Q8C, Minorities = Q8E, Inmigrants = Q8B, Gay = Q7H, Safe = Q18, Colleges = Q7G, Friends = Q24, Clusters = cl.id) %>% 
  gather(vars, value, -Clusters,-YEAR) %>% 
-  ggplot(aes(x = vars, y = value, color = Clusters, shape = Clusters), size = I(3)) + labs(x = "", y = "") +  geom_point(size = I(2))  + geom_line(aes(group = Clusters)) + 
-  facet_wrap(~YEAR, nrow = 3) + theme(axis.text.x = element_text(angle = 90, size = I(15)), legend.position = 'bottom' ) + scale_color_brewer(type='qual', palette='Paired')
+  ggplot(aes(x = vars, y = value, color = Clusters, shape = Clusters), size = I(3)) + labs(x = "", y = "") +  geom_point(size = I(3))  + geom_line(aes(group = Clusters)) + 
+  facet_wrap(~YEAR, nrow = 3) + theme(axis.text.x = element_text(angle = 90, size = I(15)), legend.position = 'bottom' ) + scale_color_brewer(type = 'qual', palette = 'Paired')
 
 
 @
@@ -605,7 +606,7 @@ soul %>%
   mutate(pr = PROJWT/3)  %>% 
   svydesign(ids =~1, strata =~QSB, weights =~pr, data = .) %>% 
   svyby(~Q5,~CCEGRP2, design = ., svymean,keep.var = FALSE, na.rm = T) %>% 
-  ftable() %>% data.frame() %>% 
+  ftable() %>% data.frame() %>% mutate(Freq = Freq*100) %>% 
   mutate( Var2 = gsub('statistic.Q5', '', Var2) ) %>% 
   spread(CCEGRP2, Freq) %>%  
   xtable(caption = 'Willingness to move outside your neighborhood', label = 'move') %>% 
