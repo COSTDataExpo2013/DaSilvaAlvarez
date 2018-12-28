@@ -654,7 +654,7 @@ However, the years in which the survey took place were particularly bad years fo
 
 The bottom panel of Figure \ref{eco} presents the U.S. GDP growth rate in 2008, 2009, and 2010. A similar pattern is observed in both panels, suggesting the economic dimension is less related with attachment during the economic crisis.
 \begin{figure}[hbpt]
-<<econ, dependson=c('data'), echo=FALSE,message=FALSE,warning=FALSE, fig.height=5>>=
+<<econ, dependson=c('data'), echo=FALSE,message=FALSE,warning=FALSE, fig.height=4.7>>=
 svydesign(ids =~ 1, strata =~ QSB, weights =~ PROJWT, data = filter(soul,!is.na(PROJWT))) %>% 
   svyby( ~ ECONOMY + CCE, ~ YEAR, design = ., svyvar, keep.var = TRUE, na.rm = T)  %>% data.frame() %>% select(1:5) %>% 
   mutate(rho = V2/sqrt(V1*V4), gdp = c(-0.4,-3.5,3.0)) %>% 
