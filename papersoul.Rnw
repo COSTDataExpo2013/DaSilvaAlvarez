@@ -693,9 +693,9 @@ levels(aux)[2] <- 'Hispanic'
 aux[soul$QD10 == 'Yes'] <- 'Hispanic'
 soul$race  <- factor(aux)
 
-soul %>% select(race, CCEGRP2, CCE, QSB,PROJWT, YEAR) %>% 
-  filter(!is.na(PROJWT), YEAR!=2010)  %>% 
-  mutate(wt = PROJWT/2) %>% 
+soul %>% select(race, CCEGRP2, CCE, QSB,WEIGHT, YEAR) %>% 
+  filter(!is.na(WEIGHT), YEAR!=2010)  %>% 
+  mutate(wt = WEIGHT/2) %>% 
   svydesign(ids=~1, strata=~QSB, weights=~wt, data=.) %>% 
   svyby(~race+CCEGRP2+CCE,~QSB, design = ., svymean,keep.var=FALSE, na.rm=T) %>%
   gather(race, prop, contains('race')) %>% 
@@ -707,7 +707,7 @@ soul %>% select(race, CCEGRP2, CCE, QSB,PROJWT, YEAR) %>%
   ggplot(aes(x = diver, y = logit(statistic.CCEGRP2Attached))) +
   geom_point(size = I(5)) + 
   geom_smooth(se = FALSE, method = 'lm', size = I(1)) +
-  theme(axis.text.y = element_text( size = I(10)) ) + 
+  theme(axis.text.y = element_text( size = I(10)), aspect.ratio = 1 ) + 
   labs( y = 'Proportion of Attach (logit scale)', x = 'Race diversity index') 
 
 
