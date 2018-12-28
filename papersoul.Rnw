@@ -155,23 +155,15 @@ The paper is organized as follows. Section 2 describes the data sources and stat
 \section{Methods and sources of information}
 \label{methods}
 
-Two sources of information are used, data provided by the Knight Foundation and the other from the American Community Survey data from the Census Bureau. This section describes the sources and initial processing of the data, and the main statistical tools used for the analysis.
+Two sources of information are used, data provided by the Knight Foundation and the other from the American Community Survey (ACS) data from the Census Bureau. This section describes the sources and initial processing of the data, and the main statistical tools used for the analysis.
 
-Data from ACS are community variable, computed using sampling weights by Census Bureau. 
-When using data from Knight Foundation surveys, the sampling weights need to be taken into
-account, if the data comes from only one year then the sampling weight is provided
-in the data, when all three year survey data are used, sampling weights are divided by three 
-so the total aggregate of each variable still can be consider an estimate of the community
-total.
 
 \subsection{Data description}
 The main data set used in this paper was provided by the Knight Foundation, consisting of collected data from 47821 people over three years (2008, 2009 and 2010) in 26 communities across the United States. The data is available at http://streaming.stat.iastate.edu/dataexpo/2013/ as part of the 2013 Data Expo competition of the American Statistical Association. Additional details on the 2013 Data Expo can be found in \cite{soul2}.
 
-Additionally, community level information from the \cite{acs2011} and seven tables of the 2007-2011 American Community Survey 5-Year estimates were obtained to provide a socio-demographic description of each community.
-
 Table \ref{des.var} shows the description of the variable groups from the two sources of information. There are a total of 232 variables in the Knight Foundation data. The variables can be divided into  four main subsets: 1) \emph{original} variables correspond to the survey questions to explain attachment pattern; 2)\emph{demographic} variables, also survey questions, have the objective to characterize demographic aspects of the respondent; 3) \emph{recoded} variables consist of a re-codification of the original ones; and 4) \emph{metric} variables were constructed by the Knight Foundation researchers to explain the attachment process.
 
-On the other hand, each table from the \cite{acs2011} has a different topic (see Table \ref{des.var}). The information corresponds to community totals for different socio-demographic variables, age group, sex, race, education level, average income, employment, etc. Different proportions, rates or indices were computed from these variables, Table \ref{des.var} presents each table description and which new variables were computed from this information.
+Additionally, community level information from the \cite{acs2011} and seven tables of the 2007-2011 ACS 5-Year estimates were obtained to provide a socio-demographic description of each community. Each table from the \cite{acs2011} has a different topic (see Table \ref{des.var}). The information corresponds to community totals for different socio-demographic variables, age group, sex, race, education level, average income, employment, etc. Different proportions, rates or indices were computed from these variables, Table \ref{des.var} presents each table description and which new variables were computed from this information.
 
 \begin{table}[h]
 \centering
@@ -200,10 +192,9 @@ The Knight survey data contains missing information. The proportion of missing v
 miss <- data.frame(is.na(soul))
 # Percentage per Case (1) and per variable (2)
 
-cap <- 'Summary of the distribution of missing values by case and variables, e.g. 29% of cases were complete on original variables and 2 of cases had missing on all original variables'
+ cap <- 'Summary of the distribution of missing values by case and variables, e.g. 29% of cases were complete on original variables and 2 of cases had missing on all original variables'
 
 # Percentage per Variable
-
 miss.v <- apply(miss, 2, mean)
 miss.c <- apply(miss, 1, mean)
 
@@ -226,6 +217,16 @@ Secondly, the set of variables with less than 25\% of missing cases are selected
 \subsection{Statistical methods}
 
 Supervised and unsupervised learning tools were used in this paper to answer the main questions presented in Section \ref{intro}. To present the results of statistical learning methods, different visualizations were used to perform an exploratory analysis. In this section the main tools for graphical and statistical analysis are described.
+
+\subsubsection{Sampling weights}
+Statistical analysis of data from survey need to make a correct use of sampling weights. Depending of the source of information the type of statistical goal, different sampling weights are used in several statistical methods or summaries.
+
+As mentioned earlier, information from ACS corresponds to tables of comunity totals (e.g. Total of 18 years old women in each community). These variables were already expanded by Census Bureau, so there is no need to consider sampling weights again. For instance, proportions of age group by gender shown in Figrue \ref{age} are computed directly from ACS data without explicit use of sampling weights. 
+
+When using data from Knight Foundation surveys, the sampling weights need to be taken into
+account. There are two variables representing sampling weights that should be used depending if data from many communities are used jointly (PROJWT) or computations are done for each community separatedly (WEIGHT) \citep{full2010}. For instance, Figure \ref{pp1} includes data from all communities toghether so PROJWT is used as sampling weight, meanwhile Figure \ref{comu} shows proportions of attachment computed separatedly within each community  WEIGHT variable is used as sampling weight. Additionally, when all three year survey data are used jointly, sampling weights are divided by three so the total aggregate of each variable still can be consider an estimate of the comunity total.
+
+Finally, sampling weights are not used for cluster analysis nor estimation of random forest models. 
 
 \subsubsection{Product plots}
 
@@ -531,8 +532,9 @@ soul.red2 %>%  rename(Cluster.ID = cl.id ) %>%
 prodplot(PROJWT ~ CCEGRP2 + Cluster.ID + YEAR, divider = c("vspine", "hspine",'vspine'), subset = level == 2) + aes(fill = CCEGRP2) + theme(legend.position = 'bottom', legend.title = element_blank(),axis.title.y = element_blank()) + scale_fill_brewer(type='seq', palette = 1)
 
 @
-\caption{Relation between community attachment and k-means cluster solution. Cluster 1 shows the highest attachment proportion while cluster 2 the lowest. Attachment distribution is stable within each group among years. \label{clus1}}
+\caption{Relation between community attachment and k-means cluster solution. Attachment distribution is stable within each group among years. Cluster 1 shows the highest attachment proportion while cluster 2 the lowest. Cluster 3 contains more unattached people while cluster 4 is mostly attached people. \label{clus1}}
 \end{figure}
+Cluster 3 contains more unattached people, cluster 4 is mostly attached people. Cluster 1 and 2 differ in that people in cluster two get more attached over time.
 
 In Figure \ref{clus1} we can see how the clusters are related with the attached group. This plot is another product plot, but now there are three categorical variables combined: year, cluster id and attachment. The area of each box represents the joint proportion of people in one attachment level, cluster id and year. The vertical margin shows that each year is about a third of the total observations. Next within a year the width of the boxes represents the cluster proportions conditional on the year, the four clusters show a pretty uniform distribution. Finally within year and cluster, the height of the box is related to the proportion of each attachment level.  The distribution of attachment is stable across years.
 
@@ -685,9 +687,9 @@ levels(aux)[2] <- 'Hispanic'
 aux[soul$QD10 == 'Yes'] <- 'Hispanic'
 soul$race  <- factor(aux)
 
-soul %>% select(race, CCEGRP2, CCE, QSB,PROJWT, YEAR) %>% 
-  filter(!is.na(PROJWT), YEAR!=2010)  %>% 
-  mutate(wt = PROJWT/2) %>% 
+soul %>% select(race, CCEGRP2, CCE, QSB,WEIGHT, YEAR) %>% 
+  filter(!is.na(WEIGHT), YEAR!=2010)  %>% 
+  mutate(wt = WEIGHT/2) %>% 
   svydesign(ids=~1, strata=~QSB, weights=~wt, data=.) %>% 
   svyby(~race+CCEGRP2+CCE,~QSB, design = ., svymean,keep.var=FALSE, na.rm=T) %>%
   gather(race, prop, contains('race')) %>% 
@@ -699,7 +701,7 @@ soul %>% select(race, CCEGRP2, CCE, QSB,PROJWT, YEAR) %>%
   ggplot(aes(x = diver, y = logit(statistic.CCEGRP2Attached))) +
   geom_point(size = I(5)) + 
   geom_smooth(se = FALSE, method = 'lm', size = I(1)) +
-  theme(axis.text.y = element_text( size = I(10)) ) + 
+  theme(axis.text.y = element_text( size = I(10)), aspect.ratio = 1 ) + 
   labs( y = 'Proportion of Attach (logit scale)', x = 'Race diversity index') 
 
 @
