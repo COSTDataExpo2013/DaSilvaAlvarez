@@ -558,14 +558,16 @@ The proportion of lifetime lived in the community and its mean value for each co
 
 ### VARIFICAR NOMBRES REPETIDOS EN SVYVAR !!!!!!!
 
-life <- soul.red2 %>% 
-  filter(!is.na(PROJWT), prop.res <= 1) %>% 
-  mutate(pr = PROJWT/3)  %>% 
-  svydesign(ids =~1, strata =~QSB, weights =~pr, data = .) %>% 
-  svyby(~prop.res + QD1 + CCE, ~QSB, 
-               design = ., svymean, keep.var = TRUE, na.rm = T)
+des.life <- soul.red2 %>% 
+  filter(!is.na(WEIGHT), prop.res <= 1) %>% 
+  mutate(pr = WEIGHT/3)  %>% 
+  svydesign(ids =~1, strata =~QSB, weights =~pr, data = .) 
+  
+  
+life <- svyby(~prop.res + QD1 + CCE, ~QSB, 
+               design = des.life, svymean, keep.var = TRUE, na.rm = T)
 
-lifevar <- svyby(~prop.res + CCE, ~QSB, des.wt, svyvar, keep.var = TRUE, na.rm = T)
+lifevar <- svyby(~prop.res + CCE, ~QSB, des.life, svyvar, keep.var = TRUE, na.rm = T)
 lifevar$rho <- with(lifevar, V2/sqrt(V1*V4))
 
 ggplot(data = life, aes(x = prop.res, y = QSB), size = I(4)) + geom_point() +
@@ -624,8 +626,8 @@ Figure \ref{wrho} shows the correlation among attachment index and proportion of
 
 \begin{figure}
 <<life_seq, dependson=c('life'), echo=FALSE,fig.height=4,message=FALSE,warning=FALSE>>=
-life %<>%
-  mutate(QSB = factor(QSB, levels = rev(levels(QSB)))) 
+# life %<>%
+#   mutate(QSB = factor(QSB, levels = rev(levels(QSB)))) 
 
 lifevar %>% data.frame() %>%  select(-starts_with('se')) %>%
   ggplot(aes(x = QSB, ymax = rho, ymin = 0)) +
