@@ -550,7 +550,14 @@ The proportion of lifetime lived in the community and its mean value for each co
 <<life, dependson='data', echo=FALSE,fig.height=4,message=FALSE,warning=FALSE>>=
 
 ### VARIFICAR NOMBRES REPETIDOS EN SVYVAR !!!!!!!
-life <- svyby(~prop.res + QD1 + CCE, ~QSB, des.wt, svymean, keep.var = TRUE, na.rm = T)
+
+life <- soul.red2 %>% 
+  filter(!is.na(PROJWT), prop.res <= 1) %>% 
+  mutate(pr = PROJWT/3)  %>% 
+  svydesign(ids =~1, strata =~QSB, weights =~pr, data = .) %>% 
+  svyby(~prop.res + QD1 + CCE, ~QSB, 
+               design = ., svymean, keep.var = TRUE, na.rm = T)
+
 lifevar <- svyby(~prop.res + CCE, ~QSB, des.wt, svyvar, keep.var = TRUE, na.rm = T)
 lifevar$rho <- with(lifevar, V2/sqrt(V1*V4))
 
