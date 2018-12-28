@@ -11,7 +11,7 @@
 \subtitle{Exploring the Soul of the Community}
 
 \author{Natalia da Silva \and
-        Ignacio Alvarez
+        Ignacio Alvarez-Castro
 }
 
 %\authorrunning{Short form of author list} % if too long for running head
@@ -20,7 +20,7 @@
               Department of Statistics, Iowa State University 
               \email{natalia@iesta.edu.uy}
            \and
-           Ignacio Alvarez \at
+           Ignacio Alvarez-Castro \at
           Department of Statistics, Iowa State University 
            \email{nachalca@iesta.edu.uy}
            %S. Author \at
@@ -36,7 +36,7 @@
 In this  paper we analyze 26 communities across the United States with the objective to understand what attaches people to their community and how this attachment differs among communities. How different are attached people from unattached? What attaches people to their community? How different are the communities? What are key drivers behind emotional attachment? To address these questions, graphical, supervised and unsupervised learning tools were used and information from the Census Bureau and the Knight Foundation were combined. 
 Using the same pre-processed variables as \cite{full2010} most likely will drive the results towards the same conclusions than the Knight foundation, so this paper does not use those variables.
 
-\keywords{community attachment \and exploratory data analysis \and random forests \and product plots}
+\keywords{community attachment \and exploratory data analysis \and random forests \and statistical visualization \and mosaic plot \and product plot}
 \end{abstract}
 
 % All chunks that make models or data procesing, at the begining
@@ -57,24 +57,17 @@ library(car)
 
 # stat vizualization
 library(productplots) 
-library(ggplot2)
+library(ggdendro)
 library(GGally)
-library(maps)
 
 # stat methods
 library(randomForest)
 library(survey)
-library(fpc)
 library(reldist) 
-library(ggdendro)
 
 # write report
 library(xtable)
 
-
-Sys.setenv(TEXINPUTS = getwd(),
-           BIBINPUTS = getwd(),
-           BSTINPUTS = getwd())
 @
 
 <<data,echo=FALSE,warning=FALSE,message=FALSE, cache=FALSE>>=
@@ -150,16 +143,21 @@ Identifying groups of people and characterizing them in relation to levels of at
 
 These questions are addressed at an individual level and at the community level. The attachment variable is measured at an individual level and is analyzed at that level. However, it may be that some community characteristics influence the attachment of the people living in the community, but the variables obtained from the \cite{acs2011} are only available at community level. These two levels of analysis may lead to different perspectives on attachment.
 
+This paper was part of 2013 Data Expo competition of the American Statistical Association. An overview of all papers and the data exposition can be
+found in \cite{soul2}. A reproducible version of this paper is placed in the following  In GitHub repository: https://github.com/COSTDataExpo2013/DaSilvaAlvarez.
+
 The paper is organized as follows. Section 2 describes the data sources and statistical methods. Section \ref{descri} presents a description of the main characteristics of the communities based on supplementary data obtained from the Census Bureau. Section \ref{explo} explores the relationship between attachment and other variables. Key drivers of attachment are presented in Section \ref{driver} based on the Knight Foundation survey data.
 
 \section{Methods and sources of information}
 \label{methods}
 
-Two sources of information are used, data provided by the Knight Foundation and the other from the American Community Survey (ACS) data from the Census Bureau. This section describes the sources and initial processing of the data, and the main statistical tools used for the analysis.
+Two sources of information are used, data provided by the Knight Foundation and the other from the American Community Survey (ACS) data from the Census Bureau. This section describes the sources and initial processing of the data, and the main statistical tools used for the analysis. 
+
+The results in this paper are obtained using R language \citep{Rlang}, and the following {\verb R } packages: {\verb tidyverse } \citep{pkgtidyverse}, {\verb car } \citep{pkgcar}, {\verb GGally } \citep{pkgGGally}, {\verb productplots } \citep{pkgproductplots}, {\verb ggdendro } \citep{pkgggdendro}, {\verb randomForest } \citep{pkgrandomForest}, {\verb survey } \citep{pkgsurvey}, {\verb reldist } \citep{pkgreldist}, {\verb xtable } \citep{pkgxtable} and {\verb knitr } \cite{pkgknitr}.
 
 
 \subsection{Data description}
-The main data set used in this paper was provided by the Knight Foundation, consisting of collected data from 47821 people over three years (2008, 2009 and 2010) in 26 communities across the United States. The data is available at http://streaming.stat.iastate.edu/dataexpo/2013/ as part of the 2013 Data Expo competition of the American Statistical Association. Additional details on the 2013 Data Expo can be found in \cite{soul2}.
+The main data set used in this paper was provided by the Knight Foundation, consisting of collected data from 47821 people over three years (2008, 2009 and 2010) in 26 communities across the United States. The data is available at http://streaming.stat.iastate.edu/dataexpo/2013/ as part of the 2013 Data Expo competition of the American Statistical Association. 
 
 Table \ref{des.var} shows the description of the variable groups from the two sources of information. There are a total of 232 variables in the Knight Foundation data. The variables can be divided into  four main subsets: 1) \emph{original} variables correspond to the survey questions to explain attachment pattern; 2)\emph{demographic} variables, also survey questions, have the objective to characterize demographic aspects of the respondent; 3) \emph{recoded} variables consist of a re-codification of the original ones; and 4) \emph{metric} variables were constructed by the Knight Foundation researchers to explain the attachment process.
 
@@ -219,10 +217,10 @@ Supervised and unsupervised learning tools were used in this paper to answer the
 \subsubsection{Sampling weights}
 Statistical analysis of data from survey need to make a correct use of sampling weights. Depending of the source of information and the statistical goal, different sampling weights are used in several statistical methods or summaries.
 
-As mentioned earlier, information from ACS corresponds to tables of comunity totals (e.g. Total of 18 years old women in each community). These variables were already expanded by Census Bureau, so there is no need to consider sampling weights again. For instance, proportions of age group by gender shown in Figrue \ref{age} are computed directly from ACS data without explicit use of sampling weights. 
+As mentioned earlier, information from ACS corresponds to tables of community totals (e.g. Total of 18 years old women in each community). These variables were already expanded by Census Bureau, so there is no need to consider sampling weights again. For instance, proportions of age group by gender shown in Figure \ref{age} are computed directly from ACS data without explicit use of sampling weights. 
 
 When using data from Knight Foundation surveys, the sampling weights need to be taken into
-account. There are two variables representing sampling weights that might be used considering if data from many communities are combined (PROJWT) or computations are done for each community separatedly (WEIGHT) \citep{full2010}. For instance, Figure \ref{pp1} includes data from all communities toghether so PROJWT is used as sampling weight, meanwhile Figure \ref{comu} shows proportions of attachment computed separatedly within each community  and therefore sampling weights correspond to WEIGHT variable. Additionally, when all three year survey data are used jointly, sampling weights are divided by three so the total aggregate of each variable still can be consider an estimate of the comunity total.
+account. There are two variables representing sampling weights that might be used considering if data from many communities are combined (PROJWT) or computations are done for each community separately (WEIGHT) \citep{full2010}. For instance, Figure \ref{pp1} includes data from all communities together so PROJWT is used as sampling weight, meanwhile Figure \ref{comu} shows proportions of attachment computed separately within each community  and therefore sampling weights correspond to WEIGHT variable. Additionally, when all three year survey data are used jointly, sampling weights are divided by three so the total aggregate of each variable still can be consider an estimate of the community total.
 
 Finally, sampling weights are not used for cluster analysis nor estimation of random forest models. 
 
@@ -408,13 +406,12 @@ census.data %>%
   scale_color_brewer(type = 'qual', palette = 2, name = 'Group')
   
 @
-\caption{Parallel coordinate plot for community cluster means. \label{cluster.cen} }
+\caption{Parallel coordinate plot for community cluster means, color indicates each cluster. Group 3 and 4 present opposite values in most analyzed variables. \label{cluster.cen} }
 \end{figure}
 
 As a final step in the socio-demographic characterization of the communities, cluster analysis on community characteristics was performed. For this analysis nine variables from the Census Bureau data are used: proportion of people between 18 and 21 years old (Yr.1821), proportion of people with a bachelor degree (Bachelor), the Gini inequality index (Gini), proportion of people who moved to the community after the year 2000 (New.entry), the average age of the female population (Age.Fem), the unemployment rate (Unemp), no workers rate (No.workers), home owner rate (Own.rate) and the proportion of African-Americans (Afr.pr).
 
-A parallel coordinate plot \citep{inselberg1985plane} is used to compare the cluster means for the variables used in the analysis. Figure \ref{cluster.cen} shows the variables used in the horizontal axis and the variable mean of each cluster on the vertical axis. Group 1 are communities with older people, low education level and biggest home owner rate. Group 2 is formed by communities with large proportion of African-Americans and unequal income distribution. Bradenton and Palm Beach (entire group 3) are communities with older people, not working and not African-American. Group 4 is formed by four communities: Charlotte, Grand Forks, Long Beach, State College and Tallahassee, all relatively younger people, with high education levels and non equitable income distribution. Group 3 and 4 present opposite values in most analyzed variables. For example Age.Fem, Unemp and No.workers are positive and have the biggest values for group 3 among all the groups while for group 4 those variables have the smallest values among all groups. Groups 1, 2 and 3 are similar in Yr.1821, Bachelor , Gini and New.entry and are different in this variabels to group 4. 
-
+A parallel coordinate plot \citep{inselberg1985plane} is used to compare the cluster means for the variables used in the analysis. Figure \ref{cluster.cen} shows the variables used in the horizontal axis and the variable mean of each cluster on the vertical axis. Group 1 are communities with older people, low education level and biggest home owner rate. Group 2 is formed by communities with large proportion of African-Americans and unequal income distribution. Bradenton and Palm Beach (entire group 3) are communities with older people, not working and not African-American. Group 4 is formed by four communities: Charlotte, Grand Forks, Long Beach, State College and Tallahassee, all relatively younger people, with high education levels and non equitable income distribution.
 
 A summary of our findings from this graphical exploration of \cite{acs2011} data:
 \begin{itemize}
@@ -519,7 +516,7 @@ Beauty = Q7A, Roads = Q7B, Housing = Q7C, Night.Life = Q8C, Minorities = Q8E, In
 
 
 @
-\caption{Cluster mean points. Mean values for all the variables used to create the clusters in every year. \label{para}}
+\caption{Cluster mean points. Mean values for all the variables used to create the clusters in every year. Color and shape represents each cluster. Clusters 3 and 4 differs only in clique variables (family and friends). \label{para}}
 \end{figure}
 
 
@@ -660,7 +657,7 @@ svydesign(ids =~ 1, strata =~ QSB, weights =~ PROJWT, data = filter(soul,!is.na(
   ggtitle('Evolution of Attachment-Economy correlation and GDP')
 
 @
-\caption{Attachment vs economic dimension. Top panel shows the correlation between attachment and economy index against time. Bottom panel shows the GDP growth rate against years. \label{eco}}
+\caption{Attachment vs economic dimension. Bottom panel shows the correlation between attachment and economy index against time. Top panel shows the GDP growth rate against years. \label{eco}}
 \end{figure}
 \newpage
 
@@ -670,7 +667,7 @@ Although the largest racial group is white, the 26 surveyed communities have dif
 
 A new variable indicating race was computed as a combination of racial group and ethnicity (Hispanic / non-Hispanic). The resulting variable consists of four categories of racial groups: White, African-American, Hispanic, Other. These are the ethnic/racial groups used in \cite{rushton2008note}, who studied the used of the Blau index as measure of diversity.
 
-The Blau index is defined as $D = 1- \sum p_i^2$ where $p_i$ is the proportion of the $i$-th group in the community.  This measure coincides with the Gini impurity measure used in statistics for decision tree related models\footnote{At the same time, Gini impurity measure is different than the Gini index used for measure income distribution in Section \ref{descri}} (as random forest).
+The Blau index is defined as $D = 1- \sum p_i^2$ where $p_i$ is the proportion of the $i$-th group in the community.  This measure coincides with the Gini impurity measure used in statistics for decision tree related models (as random forest). At the same time, Gini impurity measure is different than the Gini index used for measure income distribution in Section \ref{descri}.
 \begin{figure}
 
 <<race, echo=FALSE, dependson=c( 'data' ), message=FALSE>>=
@@ -822,7 +819,7 @@ data.dendro %>% segment() %>%
   coord_flip() + scale_y_reverse() + 
   theme(legend.position = 'none',axis.title.x = element_blank(),axis.title.y = element_blank()) + ylim(c(10,-3))
 @
-\caption{Dendrogam of communities based on importance measures. Communities close to each other have similar structure of key drivers of attachment. \label{dendro}}
+\caption{Dendrogram of communities based on importance measures. Communities close to each other have similar structure of key drivers of attachment. \label{dendro}}
 \end{figure}
 
 Finally it is possible to identify communities with similar structure for its key drivers of attachment. Figure \ref{dendro} shows the dendrogram of communities using the importance measures from the random forest, communities which are grouped together are close in terms if key drivers of attachment. For instance, Detroit, Gary and Akron are the communities with lower levels of attachment and also they are close to each other in terms of the key drivers. However, is possible to find communities with similar structure key drivers but different levels of attachment, like Bradenton and Milledgeville.
