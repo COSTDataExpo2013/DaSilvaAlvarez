@@ -144,7 +144,7 @@ Identifying groups of people and characterizing them in relation to levels of at
 These questions are addressed at an individual level and at the community level. The attachment variable is measured at an individual level and is analyzed at that level. However, it may be that some community characteristics influence the attachment of the people living in the community, but the variables obtained from the \cite{acs2011} are only available at community level. These two levels of analysis may lead to different perspectives on attachment.
 
 This paper was part of 2013 Data Expo competition of the American Statistical Association. An overview of all papers and the data exposition can be
-found in \cite{soul2}. A reproducible version of this paper is placed in the following  In GitHub repository: https://github.com/COSTDataExpo2013/DaSilvaAlvarez.
+found in \cite{soul2}. A reproducible version of this paper is placed in the following GitHub repository: https://github.com/COSTDataExpo2013/DaSilvaAlvarez.
 
 The paper is organized as follows. Section 2 describes the data sources and statistical methods. Section \ref{descri} presents a description of the main characteristics of the communities based on supplementary data obtained from the Census Bureau. Section \ref{explo} explores the relationship between attachment and other variables. Key drivers of attachment are presented in Section \ref{driver} based on the Knight Foundation survey data.
 
