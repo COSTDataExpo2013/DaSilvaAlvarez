@@ -215,12 +215,12 @@ Secondly, the set of variables with less than 25\% of missing cases are selected
 Supervised and unsupervised learning tools were used in this paper to answer the main questions presented in Section \ref{intro}. To present the results of statistical learning methods, different visualizations were used to perform an exploratory analysis. In this section the main tools for graphical and statistical analysis are described.
 
 \subsubsection{Sampling weights}
-Statistical analysis of data from survey need to make a correct use of sampling weights. Depending of the source of information and the statistical goal, different sampling weights are used in several statistical methods or summaries.
+Statistical analyses of data from surveys need to make a correct use of sampling weights. Depending on the source of information and the statistical goal, different sampling weights are used in several statistical methods or summaries.
 
-As mentioned earlier, information from ACS corresponds to tables of community totals (e.g. Total of 18 years old women in each community). These variables were already expanded by Census Bureau, so there is no need to consider sampling weights again. For instance, proportions of age group by gender shown in Figure \ref{age} are computed directly from ACS data without explicit use of sampling weights. 
+As mentioned earlier, information from ACS corresponds to tables of community totals (e.g. Total of 18 years old women in each community). These variables were already expanded by the Census Bureau, so there is no need to consider sampling weights again. For instance, proportions of age group by gender shown in Figure \ref{age} are computed directly from ACS data without explicit use of sampling weights. 
 
 When using data from Knight Foundation surveys, the sampling weights need to be taken into
-account. There are two variables representing sampling weights that might be used considering if data from many communities are combined (PROJWT) or computations are done for each community separately (WEIGHT) \citep{full2010}. For instance, Figure \ref{pp1} includes data from all communities together so PROJWT is used as sampling weight, meanwhile Figure \ref{comu} shows proportions of attachment computed separately within each community  and therefore sampling weights correspond to WEIGHT variable. Additionally, when all three year survey data are used jointly, sampling weights are divided by three so the total aggregate of each variable still can be consider an estimate of the community total.
+account. There are two variables representing sampling weights that might be used considering if data from many communities are combined (PROJWT) or computations are done for each community separately (WEIGHT) \citep{full2010}. For instance, Figure \ref{pp1} includes data from all communities together so PROJWT is used as sampling weight, meanwhile Figure \ref{comu} shows proportions of attachment computed separately within each community  and therefore sampling weights correspond to WEIGHT variable. Additionally, when all three year survey data are used jointly, sampling weights are divided by three so the total aggregate of each variable still can be considered an estimate of the community total.
 
 Finally, sampling weights are not used for cluster analysis nor estimation of random forest models. 
 
@@ -673,12 +673,15 @@ svydesign(ids =~ 1, strata =~ QSB, weights =~ PROJWT, data = filter(soul,!is.na(
   mutate(rho = V2/sqrt(V1*V4), gdp = c(-0.4,-3.5,3.0)) %>% 
   gather(variable, value,rho,gdp) %>% 
   select(YEAR, variable, value) %>% 
-  mutate(variable =  factor(variable, labels = c('GDP Rate','Attachment-Economy correlation'))) %>% ggplot(aes(x = YEAR, y = value)) + 
+  mutate(variable =  factor(variable, labels = c('GDP Rate','Attachment-Economy correlation'))) %>% 
+  ggplot(aes(x = YEAR, y = value)) + 
   geom_line() + geom_point() +
   labs(x = "", y = "", 
        title = 'Evolution of Attachment-Economy correlation and GDP') +
   facet_grid(facets = variable~., scales = 'free') + 
-  ggtitle('Evolution of Attachment-Economy correlation and GDP')
+  ggtitle('Evolution of Attachment-Economy correlation and GDP') + 
+  scale_x_continuous(breaks =  c(2008, 2009, 2010), minor_breaks = c(2008, 2009, 2010) ) 
+  
 
 @
 \caption{Attachment vs economic dimension. Bottom panel shows the correlation between attachment and economy index against time. Top panel shows the GDP growth rate against years. \label{eco}}
@@ -736,7 +739,7 @@ The most common use for the random forest classifier is for prediction, however 
 
 As mentioned in Section \ref{methods}, one output of a random forest classifier is an importance measure for the variables used to construct the forest. The variable importance measures are used to identify the key drivers of the attachment process. Additionally, groups of communities based on these importance measures are created, so communities in the same cluster have a similar structure of key drivers to explain the emotional attachment.
 
-There are two basic measures of variable importance in the \verb randomForest function within R, only the \emph{mean decrease in Gini} ($DG$) was used. Each time a variable is used within a random forest classifier is associated with a decrease in the impurity of the data nodes, which is a measure with the Gini impurity index. Important variables will achieve larger reduction of impurity, then $DG$ can be used as a variable importance measurement. Within each community explanatory variables were ranked according to $DG$. Rank 1 represents the variable associated with the largest reduction in the data impurity.
+There are two basic measures of variable importance in the {\verb randomForest } function within R, only the \emph{mean decrease in Gini} ($DG$) was used. Each time a variable is used within a random forest classifier is associated with a decrease in the impurity of the data nodes, which is a measure with the Gini impurity index. Important variables will achieve larger reduction of impurity, then $DG$ can be used as a variable importance measurement. Within each community explanatory variables were ranked according to $DG$. Rank 1 represents the variable associated with the largest reduction in the data impurity.
 
 \begin{figure}[hbpt]
 <<import.plot1, dependson='data',echo=FALSE, fig.height=5,message=FALSE,warning=FALSE>>=
@@ -871,7 +874,7 @@ The main findings from the analysis are:
 Professor Di Cook helped with the analysis and reviewing the paper. Xiaoyue Cheng's mergeGui was used to create more amenable initial data. Israel Almodovar, Vianey Leos and Ricardo Martinez helped us with proofreading our paper for final corrections.
 \end{acknowledgements}
 
-\bibliographystyle{spr-chicago}
+\bibliographystyle{bibstyle}
 \bibliography{papersoul}
 \appendix
 \section{Description of the variables created}
