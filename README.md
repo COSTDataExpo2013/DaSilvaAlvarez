@@ -3,7 +3,7 @@ DaSilvaAlvarez
 
 This repository contains supplementary material for the paper "Clicks and Cliques. Exploring the Soul of the Community" to enable the reader to reproduce the analysis.
 
-The full reference is: da Silva, N., Alvarez-Castro, I. Clicks and cliques: exploring the soul of the community. Comput Stat 34, 1537–1563 (2019).
+The full reference is: da Silva, N., Alvarez-Castro, I. Clicks and cliques: exploring the soul of the community. Computational Statistics 34(4), 1537–1563 (2019).
 
 The final publication is available at the Springer web site via https://doi.org/10.1007/s00180-019-00881-3. © Springer-Verlag GmbH Germany, part of Springer Nature, 2019.
 
